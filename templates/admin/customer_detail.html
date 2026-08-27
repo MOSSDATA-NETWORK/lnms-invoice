@@ -159,41 +159,30 @@
     <table class="data-table">
       <thead>
         <tr>
-          <th style="width: 80px">ID</th>
-          <th>生效起</th>
-          <th>生效止</th>
+          <th style="width: 50px">序号</th>
           <th>业务名称</th>
-          <th class="num">Mbps 单价</th>
-          <th class="num">IP 单价</th>
-          <th class="num">IP 数量</th>
-          <th class="num">机柜租用</th>
-          <th class="num">机柜托管</th>
+          <th class="num">数量</th>
+          <th class="num">单价</th>
+          <th class="num">总价</th>
           <th>币种</th>
-          <th>LNMS bill</th>
+          <th>备注</th>
         </tr>
       </thead>
       <tbody>
       {% for r in rates %}
         <tr>
-          <td class="muted">#{{ r.id }}</td>
+          <td class="muted">{{ loop.index }}</td>
           <td>{{ r.business_label.as_deref().unwrap_or("—") }}</td>
-          <td><span class="port">{{ r.effective_from }}</span></td>
-          <td class="muted">{{ r.effective_to.as_deref().unwrap_or("—") }}</td>
+          <td class="num">{% if r.ip_quantity == 0 %}—{% else %}{{ r.ip_quantity }}{% endif %}</td>
           <td class="num">{{ r.mbps_unit_price_cents }}</td>
-          <td class="num">{{ r.ip_unit_price_cents }}</td>
-          <td class="num">{{ r.ip_quantity }}</td>
-          <td class="num">{{ r.machine_rent_cents }}</td>
-          <td class="num">{{ r.machine_hosting_cents }}</td>
+          <td class="num">{% if r.ip_quantity == 0 %}—{% else %}{{ r.ip_quantity * r.mbps_unit_price_cents }}{% endif %}</td>
           <td class="muted">{{ r.currency }}</td>
-          <td>
-            {% match r.librenms_bill_id %}
-              {% when Some with (b) %}<span class="port">#{{ b }}</span>
-              {% when None %}<span class="muted">—</span>
-            {% endmatch %}
+          <td class="muted">
+            {%- if !r.notes.is_empty() %}{{ r.notes }}{% else %}—{% endif -%}
           </td>
         </tr>
       {% else %}
-        <tr><td colspan="11"><div class="empty">还没有费用 · <a href="/admin/rates">新增费用</a></div></td></tr>
+        <tr><td colspan="7"><div class="empty">还没有费用 · <a href="/admin/rates">新增费用</a></div></td></tr>
       {% endfor %}
       </tbody>
     </table>

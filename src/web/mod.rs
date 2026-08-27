@@ -693,6 +693,7 @@ struct AdminRateRow {
     currency: String,
     librenms_bill_id: Option<i64>,
     business_label: Option<String>,
+    notes: String,
 }
 
 #[derive(Template)]
@@ -888,6 +889,7 @@ async fn get_admin_customer_detail(
             currency: r.currency,
             librenms_bill_id: r.librenms_bill_id,
             business_label: r.business_label,
+            notes: r.notes,
         })
         .collect();
     let customer_row = customer;
