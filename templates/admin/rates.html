@@ -45,49 +45,53 @@
       <input type="hidden" name="ip_quantity" value="0" />
       <input type="hidden" name="machine_rent_cents" value="0" />
       <input type="hidden" name="machine_hosting_cents" value="0" />
-      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 24px">
-        <div class="form-row" style="margin: 0">
-          <label for="customer_id">客户</label>
-          <select id="customer_id" name="customer_id" required>
-            {% for o in customer_options %}
-              <option value="{{ o.id }}">{{ o.internal_key }} · {{ o.name }}</option>
-            {% endfor %}
-          </select>
+      <div style="display: flex; gap: 24px">
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 16px">
+          <div class="form-row" style="margin: 0">
+            <label for="customer_id">客户</label>
+            <select id="customer_id" name="customer_id" required>
+              {% for o in customer_options %}
+                <option value="{{ o.id }}">{{ o.internal_key }} · {{ o.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-row" style="margin: 0">
+            <label for="ip_quantity">数量 (可选)</label>
+            <input id="ip_quantity" type="number" name="ip_quantity" value="{{ new_form_ip_quantity }}" min="0" step="1" placeholder="留空 = 从 LNMS bill 读取 95th 带宽" />
+            <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px">留空时自动从 bill 拉取 95th 带宽(Mbps);填写时使用自定义数量(如 IP 数、机柜数)</div>
+          </div>
+          <div class="form-row" style="margin: 0">
+            <label for="currency">币种</label>
+            <input id="currency" type="text" name="currency" value="{{ new_form_currency }}" required />
+          </div>
+          <div class="form-row" style="margin: 0">
+            <label for="effective_from">生效起 (YYYY-MM-DD)</label>
+            <input id="effective_from" type="text" name="effective_from" value="{{ new_form_effective_from }}" required />
+          </div>
+          <div class="form-row" style="margin: 0">
+            <label for="effective_to">生效止 (留空=至今)</label>
+            <input id="effective_to" type="text" name="effective_to" value="{{ new_form_effective_to }}" />
+          </div>
         </div>
-        <div class="form-row" style="margin: 0">
-          <label for="new_form_business_label">业务名称</label>
-          <input id="new_form_business_label" type="text" name="business_label" value="{{ new_form_business_label }}" placeholder="如:BGP 主用 / IDC-A 区 / 备用链路" maxlength="128" />
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 16px">
+          <div class="form-row" style="margin: 0">
+            <label for="new_form_business_label">业务名称</label>
+            <input id="new_form_business_label" type="text" name="business_label" value="{{ new_form_business_label }}" placeholder="如:BGP 主用 / IDC-A 区 / 备用链路" maxlength="128" />
+          </div>
+          <div class="form-row" style="margin: 0">
+            <label for="mbps_unit_price_cents">单价</label>
+            <input id="mbps_unit_price_cents" type="text" name="mbps_unit_price_cents" value="{{ new_form_mbps_unit_price_cents }}" required />
+          </div>
+          <div class="form-row" style="margin: 0">
+            <label for="rate_librenms_bill_id">LNMS bill_id (可选)</label>
+            <input id="rate_librenms_bill_id" type="number" name="librenms_bill_id" min="1" placeholder="留空 = 用客户默认 bill" />
+            <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px">读取优先级:端口自己绑的 bill &gt; 这里填的 &gt; 客户默认 bill</div>
+          </div>
         </div>
-        <div class="form-row" style="margin: 0">
-          <label for="ip_quantity">数量 (可选)</label>
-          <input id="ip_quantity" type="number" name="ip_quantity" value="{{ new_form_ip_quantity }}" min="0" step="1" placeholder="留空 = 从 LNMS bill 读取 95th 带宽" />
-          <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px">留空时自动从 bill 拉取 95th 带宽(Mbps);填写时使用自定义数量(如 IP 数、机柜数)</div>
-        </div>
-        <div class="form-row" style="margin: 0">
-          <label for="mbps_unit_price_cents">单价</label>
-          <input id="mbps_unit_price_cents" type="text" name="mbps_unit_price_cents" value="{{ new_form_mbps_unit_price_cents }}" required />
-        </div>
-        <div class="form-row" style="margin: 0">
-          <label for="currency">币种</label>
-          <input id="currency" type="text" name="currency" value="{{ new_form_currency }}" required />
-        </div>
-        <div class="form-row" style="margin: 0">
-          <label for="effective_from">生效起 (YYYY-MM-DD)</label>
-          <input id="effective_from" type="text" name="effective_from" value="{{ new_form_effective_from }}" required />
-        </div>
-        <div class="form-row" style="margin: 0">
-          <label for="effective_to">生效止 (留空=至今)</label>
-          <input id="effective_to" type="text" name="effective_to" value="{{ new_form_effective_to }}" />
-        </div>
-        <div class="form-row" style="margin: 0">
-          <label for="rate_librenms_bill_id">LNMS bill_id (可选)</label>
-          <input id="rate_librenms_bill_id" type="number" name="librenms_bill_id" min="1" placeholder="留空 = 用客户默认 bill" />
-          <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px">读取优先级:端口自己绑的 bill &gt; 这里填的 &gt; 客户默认 bill</div>
-        </div>
-        <div class="form-row" style="margin: 0; grid-column: 1 / -1">
-          <label for="new_form_notes">备注</label>
-          <input id="new_form_notes" type="text" name="notes" value="{{ new_form_notes }}" placeholder="可选:自定义备注信息" maxlength="256" />
-        </div>
+      </div>
+      <div class="form-row" style="margin: 16px 0 0">
+        <label for="new_form_notes">备注</label>
+        <input id="new_form_notes" type="text" name="notes" value="{{ new_form_notes }}" placeholder="可选:自定义备注信息" maxlength="256" />
       </div>
       <div class="form-actions" style="justify-content: flex-end">
         <button type="submit" class="btn btn-primary">新增费用</button>
