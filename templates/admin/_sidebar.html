@@ -1,0 +1,19 @@
+<aside class="sidebar">
+  <div class="sidebar-brand"><span class="dot"></span>{{ site_title }}</div>
+  <div class="sidebar-section">管理</div>
+  <nav>
+    <a href="/admin" {% if active_page == "home" %}class="active"{% endif %}>概况</a>
+    <a href="/admin/instances" {% if active_page == "instances" %}class="active"{% endif %}>LibreNMS 实例</a>
+    <a href="/admin/customers" {% if active_page == "customers" %}class="active"{% endif %}>客户</a>
+    <a href="/admin/rates" {% if active_page == "rates" %}class="active"{% endif %}>费用</a>
+    <a href="/admin/templates" {% if active_page == "templates" %}class="active"{% endif %}>模板</a>
+    <a href="/admin/settings" {% if active_page == "settings" %}class="active"{% endif %}>设置</a>
+  </nav>
+  <div class="sidebar-section">账号</div>
+  <nav>
+    <a href="/">返回客户视图</a>
+    <form method="post" action="/logout" style="margin: 4px 0 0">
+      <button type="submit" class="btn btn-sm" style="width: 100%">退出登录</button>
+    </form>
+  </nav>
+</aside>

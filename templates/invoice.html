@@ -37,8 +37,8 @@
       </dd>
       <dt>合计</dt>
       <dd>
-        {% if invoice.total_cents.is_some() %}
-          <span class="money" style="font-size: 22px"><span class="sym">{{ invoice.currency }}</span> {{ total_yuan }}.<span class="frac">{{ total_frac }}</span></span>
+        {% if invoice.total_yuan.is_some() %}
+          <span class="money" style="font-size: 22px"><span class="sym">{{ invoice.currency }}</span> {{ total_yuan }}</span>
         {% else %}—{% endif %}
       </dd>
       <dt>模板版本</dt>

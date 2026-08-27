@@ -228,7 +228,7 @@ async fn test_admin_rate_create_then_delete() {
 
     // 新增
     let body = format!(
-        "customer_id={}&effective_from=2026-01-01&effective_to=&mbps_unit_price_cents=10&ip_unit_price_cents=5&ip_quantity=0&machine_rent_cents=0&machine_hosting_cents=0&currency=CNY",
+        "customer_id={}&effective_from=2026-01-01&effective_to=&mbps_unit_price_yuan=10&ip_unit_price_yuan=5&ip_quantity=0&machine_rent_yuan=0&machine_hosting_yuan=0&currency=CNY",
         cust.id
     );
     let resp = app
@@ -616,11 +616,11 @@ async fn test_admin_rates_page_lists_existing_rates() {
             customer_id: cust.id,
             effective_from: "2026-01-01",
             effective_to: None,
-            mbps_unit_price_cents: 10,
-            ip_unit_price_cents: 5,
+            mbps_unit_price_yuan: 10.0,
+            ip_unit_price_yuan: 5.0,
             ip_quantity: 0,
-            machine_rent_cents: 0,
-            machine_hosting_cents: 0,
+            machine_rent_yuan: 0.0,
+            machine_hosting_yuan: 0.0,
             currency: "CNY",
             librenms_bill_id: None,
             business_label: None,

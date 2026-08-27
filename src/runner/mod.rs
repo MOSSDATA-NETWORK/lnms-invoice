@@ -72,7 +72,7 @@ impl InvoiceService {
         invoice_no: &str,
         template_name: &str,
         ports: Vec<PortLine>,
-        total_cents: i64,
+        total_yuan: f64,
         chart_png: Option<Vec<u8>>,
     ) -> Result<i64> {
         let customer = self
@@ -91,7 +91,7 @@ impl InvoiceService {
                 "machine_rent": p.machine_rent,
                 "machine_hosting": p.machine_hosting,
             })).collect::<Vec<_>>(),
-            "total_cents": total_cents,
+            "total_yuan": total_yuan,
             "year": year, "month": month,
         });
         let snapshot_json = serde_json::to_string(&snapshot)
@@ -117,7 +117,7 @@ impl InvoiceService {
         match result {
             Ok(preview_pdf) => {
                 self.store
-                    .update_invoice_preview(invoice_id, total_cents, preview_pdf.to_string_lossy().as_ref())
+                    .update_invoice_preview(invoice_id, total_yuan, preview_pdf.to_string_lossy().as_ref())
                     .await?;
                 self.store
                     .record_action(invoice_id, "preview_generated", None, None)
@@ -156,11 +156,10 @@ impl InvoiceService {
             customer_name: customer.name.clone(),
             period_label: format!("{}", customer.id), // 占位:阶段 7 用 (year, month)
             ports: ports.to_vec(),
-            total_cents: ports
+            total_yuan: ports
                 .iter()
                 .filter_map(|p| p.mbps_95th) // 暂以 mbps 之和作为占位合计
-                .sum::<i64>()
-                * 100,
+                .sum::<i64>() as f64,
             currency: customer.currency.clone(),
         };
         fill_template(&template_path, &xlsx_out, "Invoice", &data)?;
@@ -285,9 +284,9 @@ impl InvoiceService {
             .unwrap_or("模板.xlsx")
             .to_string();
 
-        // 从 snapshot 反推 ports(简化:total_cents 由调用方在阶段 8 接入)
+        // 从 snapshot 反推 ports(简化:total_yuan 由调用方在阶段 8 接入)
         let ports = Vec::<PortLine>::new();
-        let total_cents = inv.total_cents.unwrap_or(0);
+        let total_yuan = inv.total_yuan.unwrap_or(0.0);
         self.generate_preview(
             inv.customer_id,
             inv.period_year,
@@ -295,7 +294,7 @@ impl InvoiceService {
             &inv.invoice_no,
             &template_name,
             ports,
-            total_cents,
+            total_yuan,
             None,
         )
         .await

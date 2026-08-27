@@ -48,12 +48,36 @@ const MIGRATIONS: &[(&str, &str)] = &[
         "20260206000000_notes_on_rates",
         include_str!("../../migrations/20260206000000_notes_on_rates.sql"),
     ),
+    (
+        "20260207000000_guarantee_on_rates",
+        include_str!("../../migrations/20260207000000_guarantee_on_rates.sql"),
+    ),
+    (
+        "20260208000000_amount_unit_to_yuan",
+        include_str!("../../migrations/20260208000000_amount_unit_to_yuan.sql"),
+    ),
+    (
+        "20260209000000_drop_guarantee_and_business_label",
+        include_str!("../../migrations/20260209000000_drop_guarantee_and_business_label.sql"),
+    ),
 ];
 
 /// 数据库连接池
 #[derive(Clone)]
 pub struct Store {
     pool: SqlitePool,
+}
+
+fn row_to_instance(r: &sqlx::sqlite::SqliteRow) -> Result<LibreNmsInstance> {
+    let active: i64 = r.try_get("is_active").map_err(sqlx_err)?;
+    Ok(LibreNmsInstance {
+        id: r.try_get("id").map_err(sqlx_err)?,
+        name: r.try_get("name").map_err(sqlx_err)?,
+        url: r.try_get("url").map_err(sqlx_err)?,
+        api_token_enc: r.try_get("api_token_enc").map_err(sqlx_err)?,
+        is_active: active != 0,
+        created_at: r.try_get("created_at").map_err(sqlx_err)?,
+    })
 }
 
 impl Store {
@@ -195,17 +219,7 @@ impl Store {
         .map_err(|e| Error::Database(format!("list librenms_instances: {e}")))?;
 
         rows.into_iter()
-            .map(|r| {
-                let active: i64 = r.try_get("is_active").map_err(sqlx_err)?;
-                Ok(LibreNmsInstance {
-                    id: r.try_get("id").map_err(sqlx_err)?,
-                    name: r.try_get("name").map_err(sqlx_err)?,
-                    url: r.try_get("url").map_err(sqlx_err)?,
-                    api_token_enc: r.try_get("api_token_enc").map_err(sqlx_err)?,
-                    is_active: active != 0,
-                    created_at: r.try_get("created_at").map_err(sqlx_err)?,
-                })
-            })
+            .map(|r| row_to_instance(&r))
             .collect()
     }
 
@@ -218,18 +232,7 @@ impl Store {
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| Error::Database(format!("find librenms_instance: {e}")))?;
-        row.map(|r| {
-            let active: i64 = r.try_get("is_active").map_err(sqlx_err)?;
-            Ok(LibreNmsInstance {
-                id: r.try_get("id").map_err(sqlx_err)?,
-                name: r.try_get("name").map_err(sqlx_err)?,
-                url: r.try_get("url").map_err(sqlx_err)?,
-                api_token_enc: r.try_get("api_token_enc").map_err(sqlx_err)?,
-                is_active: active != 0,
-                created_at: r.try_get("created_at").map_err(sqlx_err)?,
-            })
-        })
-        .transpose()
+        row.map(|r| row_to_instance(&r)).transpose()
     }
 
     /// 列出所有 LibreNMS 实例(含已停用),admin 后台用
@@ -242,17 +245,7 @@ impl Store {
         .await
         .map_err(|e| Error::Database(format!("list all librenms_instances: {e}")))?;
         rows.into_iter()
-            .map(|r| {
-                let active: i64 = r.try_get("is_active").map_err(sqlx_err)?;
-                Ok(LibreNmsInstance {
-                    id: r.try_get("id").map_err(sqlx_err)?,
-                    name: r.try_get("name").map_err(sqlx_err)?,
-                    url: r.try_get("url").map_err(sqlx_err)?,
-                    api_token_enc: r.try_get("api_token_enc").map_err(sqlx_err)?,
-                    is_active: active != 0,
-                    created_at: r.try_get("created_at").map_err(sqlx_err)?,
-                })
-            })
+            .map(|r| row_to_instance(&r))
             .collect()
     }
 
@@ -352,30 +345,21 @@ impl Store {
         &self,
         c: &NewCustomer<'_>,
     ) -> Result<i64> {
-        let now = Utc::now().to_rfc3339();
-        let res = sqlx::query(
-            "INSERT INTO customers
-                (internal_key, name, currency, librenms_instance_id, librenms_bill_id,
-                 timezone, company_type, company_info_json, company_info_schema_version,
-                 billing_address, contact_email, is_active, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)",
-        )
-        .bind(c.internal_key)
-        .bind(c.name)
-        .bind(c.currency)
-        .bind(c.librenms_instance_id)
-        .bind(c.librenms_bill_id)
-        .bind(c.timezone)
-        .bind(c.company_type)
-        .bind(c.company_info_json)
-        .bind(c.company_info_schema_version)
-        .bind(c.billing_address)
-        .bind(c.contact_email)
-        .bind(&now)
-        .execute(&self.pool)
-        .await
-        .map_err(|e| Error::Database(format!("insert customers: {e}")))?;
-        Ok(res.last_insert_rowid())
+        self.insert_customer_full(&NewCustomerFull {
+            internal_key: c.internal_key,
+            name: c.name,
+            currency: c.currency,
+            librenms_instance_id: c.librenms_instance_id,
+            librenms_bill_id: c.librenms_bill_id,
+            timezone: c.timezone,
+            company_type: c.company_type,
+            company_info_json: c.company_info_json,
+            company_info_schema_version: c.company_info_schema_version,
+            billing_address: c.billing_address,
+            contact_email: c.contact_email,
+            template_name: None,
+            is_active: true,
+        }).await
     }
 
     pub async fn find_customer_by_internal_key(&self, key: &str) -> Result<Option<Customer>> {
@@ -652,6 +636,30 @@ pub struct CustomerFullUpdate<'a> {
     pub is_active: bool,
 }
 
+fn row_to_rate(r: &sqlx::sqlite::SqliteRow) -> Result<Rate> {
+    Ok(Rate {
+        id: r.try_get("id").map_err(sqlx_err)?,
+        customer_id: r.try_get("customer_id").map_err(sqlx_err)?,
+        effective_from: r.try_get("effective_from").map_err(sqlx_err)?,
+        effective_to: r.try_get("effective_to").map_err(sqlx_err)?,
+        mbps_unit_price_yuan: r.try_get("mbps_unit_price_yuan").map_err(sqlx_err)?,
+        ip_unit_price_yuan: r.try_get("ip_unit_price_yuan").map_err(sqlx_err)?,
+        ip_quantity: r.try_get("ip_quantity").map_err(sqlx_err)?,
+        machine_rent_yuan: r.try_get("machine_rent_yuan").map_err(sqlx_err)?,
+        machine_hosting_yuan: r.try_get("machine_hosting_yuan").map_err(sqlx_err)?,
+        currency: r.try_get("currency").map_err(sqlx_err)?,
+        librenms_bill_id: r.try_get("librenms_bill_id").map_err(sqlx_err)?,
+        business_label: r.try_get("business_label").map_err(sqlx_err)?,
+        notes: r.try_get("notes").map_err(sqlx_err)?,
+    })
+}
+
+const RATE_SELECT: &str = "SELECT id, customer_id, effective_from, effective_to, \
+     mbps_unit_price_yuan, ip_unit_price_yuan, ip_quantity, \
+     machine_rent_yuan, machine_hosting_yuan, \
+     currency, librenms_bill_id, business_label, notes \
+     FROM rates";
+
 fn row_to_customer(r: sqlx::sqlite::SqliteRow) -> Result<Customer> {
     let active: i64 = r.try_get("is_active").map_err(sqlx_err)?;
     Ok(Customer {
@@ -691,34 +699,6 @@ pub struct Port {
 }
 
 impl Store {
-    pub async fn insert_port(
-        &self,
-        customer_id: i64,
-        port_label: &str,
-        ip_count_a: i64,
-        ip_count_b: i64,
-        machine_rent: bool,
-        machine_hosting: bool,
-        notes: Option<&str>,
-    ) -> Result<i64> {
-        let res = sqlx::query(
-            "INSERT INTO ports (customer_id, port_label, ip_count_a, ip_count_b,
-                                machine_rent, machine_hosting, notes)
-             VALUES (?, ?, ?, ?, ?, ?, ?)",
-        )
-        .bind(customer_id)
-        .bind(port_label)
-        .bind(ip_count_a)
-        .bind(ip_count_b)
-        .bind(machine_rent as i64)
-        .bind(machine_hosting as i64)
-        .bind(notes)
-        .execute(&self.pool)
-        .await
-        .map_err(|e| Error::Database(format!("insert ports: {e}")))?;
-        Ok(res.last_insert_rowid())
-    }
-
     pub async fn list_ports_for_customer(&self, customer_id: i64) -> Result<Vec<Port>> {
         let rows = sqlx::query(
             "SELECT id, customer_id, port_label, ip_count_a, ip_count_b,
@@ -851,7 +831,7 @@ impl Store {
 }
 
 // ============================================================
-// 费率
+// 费用
 // ============================================================
 
 #[derive(Debug, Clone)]
@@ -860,11 +840,11 @@ pub struct Rate {
     pub customer_id: i64,
     pub effective_from: String,
     pub effective_to: Option<String>,
-    pub mbps_unit_price_cents: i64,
-    pub ip_unit_price_cents: i64,
+    pub mbps_unit_price_yuan: f64,
+    pub ip_unit_price_yuan: f64,
     pub ip_quantity: i64,
-    pub machine_rent_cents: i64,
-    pub machine_hosting_cents: i64,
+    pub machine_rent_yuan: f64,
+    pub machine_hosting_yuan: f64,
     pub currency: String,
     pub librenms_bill_id: Option<i64>,
     pub business_label: Option<String>,
@@ -879,9 +859,9 @@ impl Store {
         let mut tx = self.pool.begin().await.map_err(|e| {
             Error::Database(format!("insert rates: begin tx: {e}"))
         })?;
-        // 自动收尾:把上一条会与新 effective_from 冲突的费率收尾
+        // 自动收尾:把上一条会与新 effective_from 冲突的费用收尾
         // (effective_to IS NULL OR effective_to >= 新 effective_from)
-        // 设成「前一日」。新 effective_from 当天起,以新费率为准。
+        // 设成「前一日」。新 effective_from 当天起,以新费用为准。
         let prev_day = prev_day_str(r.effective_from)?;
         sqlx::query(
             "UPDATE rates SET effective_to = ?
@@ -899,19 +879,20 @@ impl Store {
         let res = sqlx::query(
             "INSERT INTO rates
                 (customer_id, effective_from, effective_to,
-                 mbps_unit_price_cents, ip_unit_price_cents, ip_quantity,
-                 machine_rent_cents, machine_hosting_cents, currency, librenms_bill_id,
+                 mbps_unit_price_yuan, ip_unit_price_yuan, ip_quantity,
+                 machine_rent_yuan, machine_hosting_yuan,
+                 currency, librenms_bill_id,
                  business_label, notes)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         )
         .bind(r.customer_id)
         .bind(r.effective_from)
         .bind(r.effective_to)
-        .bind(r.mbps_unit_price_cents)
-        .bind(r.ip_unit_price_cents)
+        .bind(r.mbps_unit_price_yuan)
+        .bind(r.ip_unit_price_yuan)
         .bind(r.ip_quantity)
-        .bind(r.machine_rent_cents)
-        .bind(r.machine_hosting_cents)
+        .bind(r.machine_rent_yuan)
+        .bind(r.machine_hosting_yuan)
         .bind(r.currency)
         .bind(r.librenms_bill_id)
         .bind(r.business_label)
@@ -931,106 +912,41 @@ impl Store {
         customer_id: i64,
         period_yyyymm: &str, // "YYYY-MM-01" 形式
     ) -> Result<Option<Rate>> {
-        let row = sqlx::query(
-            "SELECT id, customer_id, effective_from, effective_to,
-                    mbps_unit_price_cents, ip_unit_price_cents, ip_quantity,
-                    machine_rent_cents, machine_hosting_cents, currency, librenms_bill_id,
-                    business_label, notes
-             FROM rates
-             WHERE customer_id = ?
-               AND effective_from <= ?
-               AND (effective_to IS NULL OR effective_to > ?)
-             ORDER BY effective_from DESC LIMIT 1",
-        )
+        let row = sqlx::query(&format!(
+            "{RATE_SELECT} \
+             WHERE customer_id = ? \
+               AND effective_from <= ? \
+               AND (effective_to IS NULL OR effective_to > ?) \
+             ORDER BY effective_from DESC LIMIT 1"
+        ))
         .bind(customer_id)
         .bind(period_yyyymm)
         .bind(period_yyyymm)
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| Error::Database(format!("find rate: {e}")))?;
-        row.map(|r| {
-            Ok(Rate {
-                id: r.try_get("id").map_err(sqlx_err)?,
-                customer_id: r.try_get("customer_id").map_err(sqlx_err)?,
-                effective_from: r.try_get("effective_from").map_err(sqlx_err)?,
-                effective_to: r.try_get("effective_to").map_err(sqlx_err)?,
-                mbps_unit_price_cents: r.try_get("mbps_unit_price_cents").map_err(sqlx_err)?,
-                ip_unit_price_cents: r.try_get("ip_unit_price_cents").map_err(sqlx_err)?,
-                ip_quantity: r.try_get("ip_quantity").map_err(sqlx_err)?,
-                machine_rent_cents: r.try_get("machine_rent_cents").map_err(sqlx_err)?,
-                machine_hosting_cents: r.try_get("machine_hosting_cents").map_err(sqlx_err)?,
-                currency: r.try_get("currency").map_err(sqlx_err)?,
-                librenms_bill_id: r.try_get("librenms_bill_id").map_err(sqlx_err)?,
-                business_label: r.try_get("business_label").map_err(sqlx_err)?,
-                notes: r.try_get("notes").map_err(sqlx_err)?,
-            })
-        })
-        .transpose()
+        row.map(|r| row_to_rate(&r)).transpose()
     }
 
     pub async fn list_rates_for_customer(&self, customer_id: i64) -> Result<Vec<Rate>> {
-        let rows = sqlx::query(
-            "SELECT id, customer_id, effective_from, effective_to,
-                    mbps_unit_price_cents, ip_unit_price_cents, ip_quantity,
-                    machine_rent_cents, machine_hosting_cents, currency, librenms_bill_id,
-                    business_label, notes
-             FROM rates WHERE customer_id = ? ORDER BY effective_from DESC",
-        )
+        let rows = sqlx::query(&format!(
+            "{RATE_SELECT} WHERE customer_id = ? ORDER BY effective_from DESC"
+        ))
         .bind(customer_id)
         .fetch_all(&self.pool)
         .await
         .map_err(|e| Error::Database(format!("list rates: {e}")))?;
-        rows.into_iter()
-            .map(|r| {
-                Ok(Rate {
-                    id: r.try_get("id").map_err(sqlx_err)?,
-                    customer_id: r.try_get("customer_id").map_err(sqlx_err)?,
-                    effective_from: r.try_get("effective_from").map_err(sqlx_err)?,
-                    effective_to: r.try_get("effective_to").map_err(sqlx_err)?,
-                    mbps_unit_price_cents: r.try_get("mbps_unit_price_cents").map_err(sqlx_err)?,
-                    ip_unit_price_cents: r.try_get("ip_unit_price_cents").map_err(sqlx_err)?,
-                    ip_quantity: r.try_get("ip_quantity").map_err(sqlx_err)?,
-                    machine_rent_cents: r.try_get("machine_rent_cents").map_err(sqlx_err)?,
-                    machine_hosting_cents: r.try_get("machine_hosting_cents").map_err(sqlx_err)?,
-                    currency: r.try_get("currency").map_err(sqlx_err)?,
-                    librenms_bill_id: r.try_get("librenms_bill_id").map_err(sqlx_err)?,
-                    business_label: r.try_get("business_label").map_err(sqlx_err)?,
-                    notes: r.try_get("notes").map_err(sqlx_err)?,
-                })
-            })
-            .collect()
+        rows.iter().map(row_to_rate).collect()
     }
 
     pub async fn list_all_rates(&self) -> Result<Vec<Rate>> {
-        let rows = sqlx::query(
-            "SELECT id, customer_id, effective_from, effective_to,
-                    mbps_unit_price_cents, ip_unit_price_cents, ip_quantity,
-                    machine_rent_cents, machine_hosting_cents, currency, librenms_bill_id,
-                    business_label, notes
-             FROM rates ORDER BY customer_id, effective_from DESC",
-        )
+        let rows = sqlx::query(&format!(
+            "{RATE_SELECT} ORDER BY customer_id, effective_from DESC"
+        ))
         .fetch_all(&self.pool)
         .await
         .map_err(|e| Error::Database(format!("list all rates: {e}")))?;
-        rows.into_iter()
-            .map(|r| {
-                Ok(Rate {
-                    id: r.try_get("id").map_err(sqlx_err)?,
-                    customer_id: r.try_get("customer_id").map_err(sqlx_err)?,
-                    effective_from: r.try_get("effective_from").map_err(sqlx_err)?,
-                    effective_to: r.try_get("effective_to").map_err(sqlx_err)?,
-                    mbps_unit_price_cents: r.try_get("mbps_unit_price_cents").map_err(sqlx_err)?,
-                    ip_unit_price_cents: r.try_get("ip_unit_price_cents").map_err(sqlx_err)?,
-                    ip_quantity: r.try_get("ip_quantity").map_err(sqlx_err)?,
-                    machine_rent_cents: r.try_get("machine_rent_cents").map_err(sqlx_err)?,
-                    machine_hosting_cents: r.try_get("machine_hosting_cents").map_err(sqlx_err)?,
-                    currency: r.try_get("currency").map_err(sqlx_err)?,
-                    librenms_bill_id: r.try_get("librenms_bill_id").map_err(sqlx_err)?,
-                    business_label: r.try_get("business_label").map_err(sqlx_err)?,
-                    notes: r.try_get("notes").map_err(sqlx_err)?,
-                })
-            })
-            .collect()
+        rows.iter().map(row_to_rate).collect()
     }
 
     pub async fn count_users(&self) -> Result<i64> {
@@ -1163,11 +1079,11 @@ pub struct NewRate<'a> {
     pub customer_id: i64,
     pub effective_from: &'a str,
     pub effective_to: Option<&'a str>,
-    pub mbps_unit_price_cents: i64,
-    pub ip_unit_price_cents: i64,
+    pub mbps_unit_price_yuan: f64,
+    pub ip_unit_price_yuan: f64,
     pub ip_quantity: i64,
-    pub machine_rent_cents: i64,
-    pub machine_hosting_cents: i64,
+    pub machine_rent_yuan: f64,
+    pub machine_hosting_yuan: f64,
     pub currency: &'a str,
     pub librenms_bill_id: Option<i64>,
     pub business_label: Option<&'a str>,
@@ -1248,7 +1164,7 @@ impl Store {
 }
 
 /// 给定 `YYYY-MM-DD`,返回前一天的 `YYYY-MM-DD`。
-/// `insert_rate` 自动收尾上一条费率时用。
+/// `insert_rate` 自动收尾上一条费用时用。
 fn prev_day_str(yyyymmdd: &str) -> Result<String> {
     let d = chrono::NaiveDate::parse_from_str(yyyymmdd, "%Y-%m-%d")
         .map_err(|e| Error::Database(format!("prev_day_str: parse {yyyymmdd}: {e}")))?;
@@ -1321,7 +1237,7 @@ pub struct Invoice {
     pub invoice_no: String,
     pub template_version: String,
     pub source_snapshot_json: String,
-    pub total_cents: Option<i64>,
+    pub total_yuan: Option<f64>,
     pub currency: String,
     pub pdf_path_preview: Option<String>,
     pub pdf_path_final: Option<String>,
@@ -1330,6 +1246,12 @@ pub struct Invoice {
     pub confirmed_by: Option<i64>,
     pub rejected_reason: Option<String>,
 }
+
+const INVOICE_SELECT: &str = "SELECT id, customer_id, period_year, period_month, status,
+    invoice_no, template_version, source_snapshot_json,
+    total_yuan, currency, pdf_path_preview, pdf_path_final,
+    created_at, confirmed_at, confirmed_by, rejected_reason
+    FROM invoices";
 
 impl Store {
     pub async fn upsert_invoice_generating(
@@ -1373,15 +1295,15 @@ impl Store {
     pub async fn update_invoice_preview(
         &self,
         id: i64,
-        total_cents: i64,
+        total_yuan: f64,
         pdf_path_preview: &str,
     ) -> Result<()> {
         sqlx::query(
             "UPDATE invoices
-             SET status = 'preview', total_cents = ?, pdf_path_preview = ?
+             SET status = 'preview', total_yuan = ?, pdf_path_preview = ?
              WHERE id = ?",
         )
-        .bind(total_cents)
+        .bind(total_yuan)
         .bind(pdf_path_preview)
         .bind(id)
         .execute(&self.pool)
@@ -1443,17 +1365,11 @@ impl Store {
     }
 
     pub async fn find_invoice(&self, id: i64) -> Result<Option<Invoice>> {
-        let row = sqlx::query(
-            "SELECT id, customer_id, period_year, period_month, status,
-                    invoice_no, template_version, source_snapshot_json,
-                    total_cents, currency, pdf_path_preview, pdf_path_final,
-                    created_at, confirmed_at, confirmed_by, rejected_reason
-             FROM invoices WHERE id = ?",
-        )
-        .bind(id)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(|e| Error::Database(format!("find invoice: {e}")))?;
+        let row = sqlx::query(&format!("{INVOICE_SELECT} WHERE id = ?"))
+            .bind(id)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(|e| Error::Database(format!("find invoice: {e}")))?;
         row.map(row_to_invoice).transpose()
     }
 
@@ -1463,13 +1379,9 @@ impl Store {
         year: i64,
         month: i64,
     ) -> Result<Option<Invoice>> {
-        let row = sqlx::query(
-            "SELECT id, customer_id, period_year, period_month, status,
-                    invoice_no, template_version, source_snapshot_json,
-                    total_cents, currency, pdf_path_preview, pdf_path_final,
-                    created_at, confirmed_at, confirmed_by, rejected_reason
-             FROM invoices WHERE customer_id = ? AND period_year = ? AND period_month = ?",
-        )
+        let row = sqlx::query(&format!(
+            "{INVOICE_SELECT} WHERE customer_id = ? AND period_year = ? AND period_month = ?"
+        ))
         .bind(customer_id)
         .bind(year)
         .bind(month)
@@ -1480,14 +1392,9 @@ impl Store {
     }
 
     pub async fn list_invoices_for_customer(&self, customer_id: i64) -> Result<Vec<Invoice>> {
-        let rows = sqlx::query(
-            "SELECT id, customer_id, period_year, period_month, status,
-                    invoice_no, template_version, source_snapshot_json,
-                    total_cents, currency, pdf_path_preview, pdf_path_final,
-                    created_at, confirmed_at, confirmed_by, rejected_reason
-             FROM invoices WHERE customer_id = ?
-             ORDER BY period_year DESC, period_month DESC",
-        )
+        let rows = sqlx::query(&format!(
+            "{INVOICE_SELECT} WHERE customer_id = ? ORDER BY period_year DESC, period_month DESC"
+        ))
         .bind(customer_id)
         .fetch_all(&self.pool)
         .await
@@ -1532,7 +1439,7 @@ fn row_to_invoice(r: sqlx::sqlite::SqliteRow) -> Result<Invoice> {
         invoice_no: r.try_get("invoice_no").map_err(sqlx_err)?,
         template_version: r.try_get("template_version").map_err(sqlx_err)?,
         source_snapshot_json: r.try_get("source_snapshot_json").map_err(sqlx_err)?,
-        total_cents: r.try_get("total_cents").map_err(sqlx_err)?,
+        total_yuan: r.try_get("total_yuan").map_err(sqlx_err)?,
         currency: r.try_get("currency").map_err(sqlx_err)?,
         pdf_path_preview: r.try_get("pdf_path_preview").map_err(sqlx_err)?,
         pdf_path_final: r.try_get("pdf_path_final").map_err(sqlx_err)?,

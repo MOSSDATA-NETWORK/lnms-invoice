@@ -1,31 +1,13 @@
 {% extends "base.html" %}
-{% block title %}管理后台 · lnms-invoice{% endblock %}
+{% block title %}管理后台 · {{ site_title }}{% endblock %}
 {% block sidebar %}
-<aside class="sidebar">
-  <div class="sidebar-brand"><span class="dot"></span>lnms-invoice</div>
-  <div class="sidebar-section">管理</div>
-  <nav>
-    <a href="/admin" class="active">概况</a>
-    <a href="/admin/instances">LibreNMS 实例</a>
-    <a href="/admin/customers">客户</a>
-    <a href="/admin/rates">费用</a>
-    <a href="/admin/templates">模板</a>
-    <a href="/admin/settings">设置</a>
-  </nav>
-  <div class="sidebar-section">账号</div>
-  <nav>
-    <a href="/">返回客户视图</a>
-    <form method="post" action="/logout" style="margin: 4px 0 0">
-      <button type="submit" class="btn btn-sm" style="width: 100%">退出登录</button>
-    </form>
-  </nav>
-</aside>
+{% include "admin/_sidebar.html" %}
 {% endblock %}
 {% block body %}
 <div class="topbar">
   <div>
-    <h1>系统概况</h1>
-    <p class="subtitle">实时数据</p>
+    <h1>管理后台</h1>
+    <p class="subtitle">数据总览</p>
   </div>
   <div class="user">
     <span class="avatar">{{ username.chars().next().unwrap_or('?') }}</span>
@@ -34,39 +16,23 @@
 </div>
 
 <div class="page page-wide">
-  <div class="stat-grid"><div class="card stat-card"><div class="stat-label">LibreNMS 实例</div><div class="stat-num">{{ counts.instances }}</div><div class="stat-sub">已激活</div></div><div class="card stat-card"><div class="stat-label">客户</div><div class="stat-num">{{ counts.customers }}</div><div class="stat-sub">全部</div></div><div class="card stat-card"><div class="stat-label">费用记录</div><div class="stat-num">{{ counts.rates }}</div><div class="stat-sub">历史区间</div></div><div class="card stat-card"><div class="stat-label">用户账号</div><div class="stat-num">{{ counts.users }}</div><div class="stat-sub">管理员与运维</div></div></div>
-
-  <h2 style="margin-top: 36px; margin-bottom: 12px">快捷入口</h2>
-  <div class="panel">
-    <ul style="list-style: none; padding: 0; margin: 0">
-      <li style="padding: 14px 20px; border-bottom: 1px solid var(--separator)">
-        <a href="/admin/instances" style="display: flex; justify-content: space-between; align-items: center">
-          <div>
-            <div style="font-weight: 600">LibreNMS 实例</div>
-            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px">查看已配置的 NMS 后端、token 是否已设置</div>
-          </div>
-          <span style="color: var(--text-tertiary)">›</span>
-        </a>
-      </li>
-      <li style="padding: 14px 20px; border-bottom: 1px solid var(--separator)">
-        <a href="/admin/customers" style="display: flex; justify-content: space-between; align-items: center">
-          <div>
-            <div style="font-weight: 600">客户列表</div>
-            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px">启停客户、查看端口与费用</div>
-          </div>
-          <span style="color: var(--text-tertiary)">›</span>
-        </a>
-      </li>
-      <li style="padding: 14px 20px">
-        <a href="/admin/rates" style="display: flex; justify-content: space-between; align-items: center">
-          <div>
-            <div style="font-weight: 600">费用管理</div>
-            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px">新增 / 删除客户费用档</div>
-          </div>
-          <span style="color: var(--text-tertiary)">›</span>
-        </a>
-      </li>
-    </ul>
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px">
+    <div class="card" style="padding: 20px">
+      <div class="stat-label">LibreNMS 实例</div>
+      <div style="font-size: 32px; font-weight: 700; margin-top: 4px">{{ counts.instances }}</div>
+    </div>
+    <div class="card" style="padding: 20px">
+      <div class="stat-label">客户</div>
+      <div style="font-size: 32px; font-weight: 700; margin-top: 4px">{{ counts.customers }}</div>
+    </div>
+    <div class="card" style="padding: 20px">
+      <div class="stat-label">费率</div>
+      <div style="font-size: 32px; font-weight: 700; margin-top: 4px">{{ counts.rates }}</div>
+    </div>
+    <div class="card" style="padding: 20px">
+      <div class="stat-label">用户</div>
+      <div style="font-size: 32px; font-weight: 700; margin-top: 4px">{{ counts.users }}</div>
+    </div>
   </div>
 </div>
 {% endblock %}

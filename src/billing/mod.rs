@@ -1,6 +1,6 @@
 //! 月度账单数据流(阶段 7)
 //!
-//! 从 LNMS 历史数据 → 95th → 应用费率 → 生成 InvoiceData。
+//! 从 LNMS 历史数据 → 95th → 应用费用 → 生成 InvoiceData。
 //!
 //! 算法(决策 #16,#17):
 //! 1. `/bills/{id}/history` 返回 5min 序列;按 `total`(bits)求 95 百分位;
@@ -52,27 +52,27 @@ pub fn compute_95th_mbps(points: &[HistoryPoint]) -> Option<f64> {
     Some(bps_values[idx] / 1_000_000.0)
 }
 
-/// 给定端口(各绑各的 bill) + 费率,生成 PortLine 列表 + 合计 cents。
+/// 给定端口(各绑各的 bill) + 费用,生成 PortLine 列表 + 合计元(yuan,f64)。
 ///
 /// 每个端口有自己的 95th Mbps(可能为 None,表示拉取失败或无数据)。
 ///
-/// 合计 = Σ 各端口费用(mbps × 单价 + rent + hosting) + 客户级 IP 费用(ip_quantity × ip_unit_price_cents)。
-/// IP 数量 v0.6.3 起在费用表单上直接维护,不再从端口累加。
+/// 合计算法(简单求和):
+///   mbps_fee = (Σ 各端口 Mbps95th) × 单价
+///  + Σ 端口机柜费(rent + hosting)
+///  + 客户级 IP 费用(ip_quantity × ip_unit_price_yuan)
 pub fn build_invoice_lines(
     port_95ths: &[(Port, Option<f64>)],
     rate: &Rate,
-) -> (Vec<PortLine>, i64) {
+) -> (Vec<PortLine>, f64) {
     let mut lines = Vec::with_capacity(port_95ths.len());
-    let mut total = 0i64;
+    let mut total_mbps_95th: i64 = 0;
+    let mut rack_yuan: f64 = 0.0;
     for (p, mbps_95th) in port_95ths {
         let mbps = mbps_95th.unwrap_or(0.0).round() as i64;
-        // 端口级 Mbps 费用:mbps × 单价
-        let port_mbps_cents = mbps.max(0) * rate.mbps_unit_price_cents;
+        total_mbps_95th += mbps.max(0);
         // 机柜租 / 托管费用(布尔,只用一次,不走端口重复)
-        let rent_cents = if p.machine_rent { rate.machine_rent_cents } else { 0 };
-        let hosting_cents = if p.machine_hosting { rate.machine_hosting_cents } else { 0 };
-        let port_total = port_mbps_cents + rent_cents + hosting_cents;
-        total += port_total;
+        rack_yuan += if p.machine_rent { rate.machine_rent_yuan } else { 0.0 };
+        rack_yuan += if p.machine_hosting { rate.machine_hosting_yuan } else { 0.0 };
         lines.push(PortLine {
             label: p.port_label.clone(),
             mbps_95th: mbps_95th.map(|m| m.round() as i64),
@@ -80,9 +80,13 @@ pub fn build_invoice_lines(
             machine_hosting: p.machine_hosting,
         });
     }
-    // 客户级 IP 费用(单笔,直接维护在费用表单上,不再从端口累加)
-    total += rate.ip_quantity.max(0) * rate.ip_unit_price_cents;
-    (lines, total)
+
+    // 简单求和:不引入保底/超额自动算,运营手工加减费用
+    let mbps_fee = total_mbps_95th as f64 * rate.mbps_unit_price_yuan;
+
+    // 客户级 IP 费用(单笔,直接��护在费用表单上,不再从端口累加)
+    let ip_fee = rate.ip_quantity.max(0) as f64 * rate.ip_unit_price_yuan;
+    (lines, mbps_fee + rack_yuan + ip_fee)
 }
 /// 从 history JSON 原始值直接计算 95th Mbps(对外便捷入口)。
 pub fn mbps_95th_from_history_json(raw: &serde_json::Value) -> Result<Option<f64>> {

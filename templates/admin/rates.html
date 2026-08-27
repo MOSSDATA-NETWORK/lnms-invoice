@@ -1,25 +1,7 @@
 {% extends "base.html" %}
-{% block title %}费用管理 · lnms-invoice{% endblock %}
+{% block title %}费用管理 · {{ site_title }}{% endblock %}
 {% block sidebar %}
-<aside class="sidebar">
-  <div class="sidebar-brand"><span class="dot"></span>lnms-invoice</div>
-  <div class="sidebar-section">管理</div>
-  <nav>
-    <a href="/admin">概况</a>
-    <a href="/admin/instances">LibreNMS 实例</a>
-    <a href="/admin/customers">客户</a>
-    <a href="/admin/rates" class="active">费用</a>
-    <a href="/admin/templates">模板</a>
-    <a href="/admin/settings">设置</a>
-  </nav>
-  <div class="sidebar-section">账号</div>
-  <nav>
-    <a href="/">返回客户视图</a>
-    <form method="post" action="/logout" style="margin: 4px 0 0">
-      <button type="submit" class="btn btn-sm" style="width: 100%">退出登录</button>
-    </form>
-  </nav>
-</aside>
+{% include "admin/_sidebar.html" %}
 {% endblock %}
 {% block body %}
 <div class="topbar">
@@ -41,61 +23,52 @@
   <div class="card">
     <div class="card-header"><h3>新增费用</h3></div>
     <form method="post" action="/admin/rates/new">
-      <input type="hidden" name="ip_unit_price_cents" value="0" />
-      <input type="hidden" name="ip_quantity" value="0" />
-      <input type="hidden" name="machine_rent_cents" value="0" />
-      <input type="hidden" name="machine_hosting_cents" value="0" />
-      <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 24px; row-gap: 0">
-        <!-- Row 1 -->
-        <div style="padding-bottom: 16px">
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 24px">
+        <div class="form-row">
           <label for="customer_id">客户</label>
-          <select id="customer_id" name="customer_id" required style="width:100%;margin-top:6px;padding:8px 12px;height:36px;border:1px solid var(--separator-strong);border-radius:var(--radius-sm);font-size:15px;font-family:inherit;background:var(--surface)">
+          <select id="customer_id" name="customer_id" required>
             {% for o in customer_options %}
               <option value="{{ o.id }}">{{ o.internal_key }} · {{ o.name }}</option>
             {% endfor %}
           </select>
         </div>
-        <div style="padding-bottom: 16px">
+        <div class="form-row">
           <label for="new_form_business_label">业务名称</label>
-          <input id="new_form_business_label" type="text" name="business_label" value="{{ new_form_business_label }}" placeholder="如:BGP 主用 / IDC-A 区 / 备用链路" maxlength="128" style="width:100%;margin-top:6px;padding:8px 12px;height:36px;border:1px solid var(--separator-strong);border-radius:var(--radius-sm);font-size:15px;font-family:inherit" />
+          <input id="new_form_business_label" type="text" name="business_label" value="{{ new_form_business_label }}" placeholder="如:BGP 主用 / IDC-A 区 / 备用链路" maxlength="128" />
         </div>
-        <!-- Row 2 -->
-        <div style="padding-bottom: 16px">
-          <label for="ip_quantity">数量 (可选)</label>
-          <input id="ip_quantity" type="number" name="ip_quantity" value="{{ new_form_ip_quantity }}" min="0" step="1" placeholder="留空 = 从 LNMS bill 读取 95th 带宽" style="width:100%;margin-top:6px;padding:8px 12px;height:36px;border:1px solid var(--separator-strong);border-radius:var(--radius-sm);font-size:15px;font-family:inherit" />
-          <div style="font-size:12px;color:var(--text-tertiary);margin-top:4px;line-height:1.4">留空时自动从 bill 拉取 95th 带宽(Mbps);填写时使用自定义数量(如 IP 数、机柜数)</div>
+        <div class="form-row">
+          <label for="ip_quantity">数量</label>
+          <input id="ip_quantity" type="number" name="ip_quantity" value="{{ new_form_ip_quantity }}" min="0" step="1" />
+          <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px">留空时自动从 bill 拉取 95th 带宽(Mbps);填写时使用自定义数量(如 IP 数、机柜数)</div>
         </div>
-        <div style="padding-bottom: 16px">
-          <label for="mbps_unit_price_cents">单价</label>
-          <input id="mbps_unit_price_cents" type="text" name="mbps_unit_price_cents" value="{{ new_form_mbps_unit_price_cents }}" required style="width:100%;margin-top:6px;padding:8px 12px;height:36px;border:1px solid var(--separator-strong);border-radius:var(--radius-sm);font-size:15px;font-family:inherit" />
+        <div class="form-row">
+          <label for="mbps_unit_price_yuan">单价</label>
+          <input id="mbps_unit_price_yuan" type="number" name="mbps_unit_price_yuan" value="{{ new_form_mbps_unit_price_yuan }}" required step="0.01" min="0" />
         </div>
-        <!-- Row 3 -->
-        <div style="padding-bottom: 16px">
+        <div class="form-row">
           <label for="currency">币种</label>
-          <input id="currency" type="text" name="currency" value="{{ new_form_currency }}" required style="width:100%;margin-top:6px;padding:8px 12px;height:36px;border:1px solid var(--separator-strong);border-radius:var(--radius-sm);font-size:15px;font-family:inherit" />
+          <input id="currency" type="text" name="currency" value="{{ new_form_currency }}" required />
         </div>
-        <div style="padding-bottom: 16px">
-          <label for="rate_librenms_bill_id">LNMS bill_id (可选)</label>
-          <input id="rate_librenms_bill_id" type="number" name="librenms_bill_id" min="1" placeholder="留空 = 用客户默认 bill" style="width:100%;margin-top:6px;padding:8px 12px;height:36px;border:1px solid var(--separator-strong);border-radius:var(--radius-sm);font-size:15px;font-family:inherit" />
-          <div style="font-size:12px;color:var(--text-tertiary);margin-top:4px;line-height:1.4">读取优先级:端口自己绑的 bill &gt; 这里填的 &gt; 客户默认 bill</div>
+        <div class="form-row">
+          <label for="rate_librenms_bill_id">bill_id</label>
+          <input id="rate_librenms_bill_id" type="number" name="librenms_bill_id" min="1" placeholder="留空 = 用客户默认 bill" />
+          <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px">读取优先级:端口自己绑的 bill &gt; 这里填的 &gt; 客户默认 bill</div>
         </div>
-        <!-- Row 4 -->
-        <div style="padding-bottom: 16px">
-          <label for="effective_from">生效起 (YYYY-MM-DD)</label>
-          <input id="effective_from" type="text" name="effective_from" value="{{ new_form_effective_from }}" required style="width:100%;margin-top:6px;padding:8px 12px;height:36px;border:1px solid var(--separator-strong);border-radius:var(--radius-sm);font-size:15px;font-family:inherit" />
+        <div class="form-row">
+          <label for="effective_from">生效起</label>
+          <input id="effective_from" type="text" name="effective_from" value="{{ new_form_effective_from }}" required placeholder="YYYY-MM-DD" />
         </div>
-        <div style="padding-bottom: 16px">
-          <label for="effective_to">生效止 (留空=至今)</label>
-          <input id="effective_to" type="text" name="effective_to" value="{{ new_form_effective_to }}" style="width:100%;margin-top:6px;padding:8px 12px;height:36px;border:1px solid var(--separator-strong);border-radius:var(--radius-sm);font-size:15px;font-family:inherit" />
+        <div class="form-row">
+          <label for="effective_to">生效止</label>
+          <input id="effective_to" type="text" name="effective_to" value="{{ new_form_effective_to }}" placeholder="留空=至今" />
         </div>
-        <!-- Row 5: 备注 full width -->
-        <div style="grid-column: 1 / -1; padding-bottom: 16px">
+        <div class="form-row">
           <label for="new_form_notes">备注</label>
-          <input id="new_form_notes" type="text" name="notes" value="{{ new_form_notes }}" placeholder="可选:自定义备注信息" maxlength="256" style="width:100%;margin-top:6px;padding:8px 12px;height:36px;border:1px solid var(--separator-strong);border-radius:var(--radius-sm);font-size:15px;font-family:inherit" />
+          <input id="new_form_notes" type="text" name="notes" value="{{ new_form_notes }}" placeholder="可选" maxlength="256" />
         </div>
-      </div>
-      <div class="form-actions" style="margin-top:0">
-        <button type="submit" class="btn btn-primary">新增费用</button>
+        <div class="form-row" style="display:flex;align-items:flex-end">
+          <button type="submit" class="btn btn-primary">新增费用</button>
+        </div>
       </div>
     </form>
   </div>
@@ -106,51 +79,40 @@
       <span class="count">{{ rates.len() }}</span>
     </div>
     <table class="data-table">
-      <colgroup>
-        <col style="width: 50px" />
-        <col />
-        <col style="width: 160px" />
-        <col style="width: 100px" />
-        <col style="width: 100px" />
-        <col style="width: 100px" />
-        <col style="width: 80px" />
-        <col />
-        <col style="width: 60px" />
-      </colgroup>
       <thead>
         <tr>
-          <th>序号</th>
+          <th style="width: 50px">序号</th>
+          <th>时间周期</th>
           <th>业务名称</th>
-          <th>时间</th>
           <th class="num">数量</th>
           <th class="num">单价</th>
           <th class="num">总价</th>
-          <th>币种</th>
           <th>备注</th>
-          <th></th>
+          <th style="width: 80px"></th>
         </tr>
       </thead>
       <tbody>
       {% for r in rates %}
         <tr>
           <td class="muted">{{ loop.index }}</td>
-          <td>{{ r.business_label.as_deref().unwrap_or("—") }}</td>
           <td class="muted">{{ r.effective_from }}{% match r.effective_to %}{% when Some with (t) %} ~ {{ t }}{% when None %} ~ 至今{% endmatch %}</td>
+          <td>{{ r.business_label.as_deref().unwrap_or("—") }}</td>
           <td class="num">{% if r.ip_quantity == 0 %}—{% else %}{{ r.ip_quantity }}{% endif %}</td>
-          <td class="num">{{ r.mbps_unit_price_cents }}</td>
-          <td class="num">{% if r.ip_quantity == 0 %}—{% else %}{{ r.ip_quantity * r.mbps_unit_price_cents }}{% endif %}</td>
-          <td class="muted">{{ r.currency }}</td>
+          <td class="num">{{ format!("{:.2}", r.mbps_unit_price_yuan) }}</td>
+          <td class="num">{% if r.ip_quantity == 0 %}—{% else %}{{ format!("{:.2}", r.ip_quantity as f64 * r.mbps_unit_price_yuan) }}{% endif %}</td>
           <td class="muted">
             {%- if !r.notes.is_empty() %}{{ r.notes }}{% else %}—{% endif -%}
           </td>
           <td>
-            <form method="post" action="/admin/rates/{{ r.id }}/delete" style="display:inline" onsubmit="return confirm('确认删除该费用?');">
-              <button class="btn btn-sm btn-danger" type="submit">删除</button>
-            </form>
+            <div class="row-actions">
+              <form method="post" action="/admin/rates/{{ r.id }}/delete" style="display:inline" onsubmit="return confirm('确认删除该费用?');">
+                <button class="btn btn-sm btn-danger" type="submit">删除</button>
+              </form>
+            </div>
           </td>
         </tr>
       {% else %}
-        <tr><td colspan="9"><div class="empty">还没有费用记录</div></td></tr>
+        <tr><td colspan="8"><div class="empty">还没有费用记录</div></td></tr>
       {% endfor %}
       </tbody>
     </table>

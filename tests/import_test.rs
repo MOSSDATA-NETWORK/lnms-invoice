@@ -28,10 +28,10 @@ const SAMPLE: &str = r#"{
     {
       "customer_internal_key": "A",
       "effective_from": "2026-01-01",
-      "mbps_unit_price_cents": 10,
-      "ip_unit_price_cents": 5,
-      "machine_rent_cents": 500,
-      "machine_hosting_cents": 300,
+      "mbps_unit_price_yuan": 10,
+      "ip_unit_price_yuan": 5,
+      "machine_rent_yuan": 500,
+      "machine_hosting_yuan": 300,
       "currency": "CNY"
     }
   ]
@@ -78,13 +78,14 @@ async fn test_import_writes_db_correctly() {
     let cid = store.insert_customer(&nc).await.unwrap();
     for p in cust["ports"].as_array().unwrap() {
         store
-            .insert_port(
+            .insert_port_with_bill(
                 cid,
                 p["label"].as_str().unwrap(),
                 p["ip_count_a"].as_i64().unwrap(),
                 p["ip_count_b"].as_i64().unwrap(),
                 p["machine_rent"].as_bool().unwrap_or(false),
                 p["machine_hosting"].as_bool().unwrap_or(false),
+                None,
                 None,
             )
             .await
@@ -95,11 +96,11 @@ async fn test_import_writes_db_correctly() {
         customer_id: cid,
         effective_from: r["effective_from"].as_str().unwrap(),
         effective_to: None,
-        mbps_unit_price_cents: r["mbps_unit_price_cents"].as_i64().unwrap(),
-        ip_unit_price_cents: r["ip_unit_price_cents"].as_i64().unwrap(),
+        mbps_unit_price_yuan: r["mbps_unit_price_yuan"].as_f64().unwrap(),
+        ip_unit_price_yuan: r["ip_unit_price_yuan"].as_f64().unwrap(),
         ip_quantity: 0,
-        machine_rent_cents: r["machine_rent_cents"].as_i64().unwrap(),
-        machine_hosting_cents: r["machine_hosting_cents"].as_i64().unwrap(),
+        machine_rent_yuan: r["machine_rent_yuan"].as_f64().unwrap(),
+        machine_hosting_yuan: r["machine_hosting_yuan"].as_f64().unwrap(),
         currency: r["currency"].as_str().unwrap(),
         librenms_bill_id: None,
             business_label: None,
@@ -123,6 +124,6 @@ async fn test_import_writes_db_correctly() {
         .await
         .unwrap()
         .unwrap();
-    assert_eq!(rate.mbps_unit_price_cents, 10);
-    assert_eq!(rate.machine_hosting_cents, 300);
+    assert_eq!(rate.mbps_unit_price_yuan, 10.0);
+    assert_eq!(rate.machine_hosting_yuan, 300.0);
 }

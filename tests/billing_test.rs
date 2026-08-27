@@ -22,21 +22,21 @@ fn port(label: &str, ip_a: i64, ip_b: i64, rent: bool, hosting: bool) -> Port {
     }
 }
 
-fn rate(mbps: i64, ip: i64, rent: i64, hosting: i64) -> Rate {
+fn rate(mbps: f64, ip: f64, rent: f64, hosting: f64) -> Rate {
     rate_with_ip_qty(mbps, ip, 0, rent, hosting)
 }
 
-fn rate_with_ip_qty(mbps: i64, ip: i64, ip_qty: i64, rent: i64, hosting: i64) -> Rate {
+fn rate_with_ip_qty(mbps: f64, ip: f64, ip_qty: i64, rent: f64, hosting: f64) -> Rate {
     Rate {
         id: 0,
         customer_id: 0,
         effective_from: "2026-01-01".into(),
         effective_to: None,
-        mbps_unit_price_cents: mbps,
-        ip_unit_price_cents: ip,
+        mbps_unit_price_yuan: mbps,
+        ip_unit_price_yuan: ip,
         ip_quantity: ip_qty,
-        machine_rent_cents: rent,
-        machine_hosting_cents: hosting,
+        machine_rent_yuan: rent,
+        machine_hosting_yuan: hosting,
         currency: "CNY".into(),
         librenms_bill_id: None,
         business_label: None,
@@ -113,38 +113,38 @@ fn test_build_invoice_lines_aggregates_total() {
         port("B", 0, 4, true, false), // rent=true → +500
     ];
     // v0.6.3 起 IP 数量在费率上(rate.ip_quantity),不再从端口累加
-    let r = rate_with_ip_qty(10, 5, 12, 500, 300); // mbps 10 cents, ip 5 cents, 12 IPs
+    let r = rate_with_ip_qty(10.0, 5.0, 12, 500.0, 300.0); // mbps ¥10, ip ¥5, 12 IPs
     let port_95ths: Vec<(Port, Option<f64>)> =
         ports.iter().cloned().map(|p| (p, Some(85.0))).collect();
-    let (lines, total): (Vec<PortLine>, i64) = build_invoice_lines(&port_95ths, &r);
+    let (lines, total): (Vec<PortLine>, f64) = build_invoice_lines(&port_95ths, &r);
     assert_eq!(lines.len(), 2);
     // A: 85*10 + 0 + 300 = 1150
     // B: 85*10 + 500 = 1350
     // IP: 12 * 5 = 60
-    assert_eq!(total, 1150 + 1350 + 60);
+    assert_eq!(total, 1150.0 + 1350.0 + 60.0);
     assert_eq!(lines[0].mbps_95th, Some(85));
 }
 
 #[test]
 fn test_build_invoice_lines_zero_mbps_still_charges_static_fees() {
     let ports = vec![port("A", 0, 0, true, true)];
-    let r = rate(10, 5, 500, 300);
+    let r = rate(10.0, 5.0, 500.0, 300.0);
     let port_95ths: Vec<(Port, Option<f64>)> =
         ports.iter().cloned().map(|p| (p, Some(0.0))).collect();
     let (_, total) = build_invoice_lines(&port_95ths, &r);
     // 0*10 + 0*5 + 500 + 300 = 800
-    assert_eq!(total, 800);
+    assert_eq!(total, 800.0);
 }
 
 #[test]
 fn test_build_invoice_lines_none_mbps() {
     let ports = vec![port("A", 1, 0, false, false)];
-    let r = rate(10, 5, 500, 300);
+    let r = rate(10.0, 5.0, 500.0, 300.0);
     let port_95ths: Vec<(Port, Option<f64>)> =
         ports.iter().cloned().map(|p| (p, None)).collect();
     let (_, total) = build_invoice_lines(&port_95ths, &r);
     // mbps None → 0, no static fees, no per-port IP(v0.6.3 后 IP 在费率上)
-    assert_eq!(total, 0);
+    assert_eq!(total, 0.0);
 }
 
 #[test]
@@ -154,10 +154,10 @@ fn test_build_invoice_lines_ip_quantity_on_rate() {
         port("A", 8, 4, false, false), // 这些 IP 数量不再计入
         port("B", 0, 0, false, false),
     ];
-    let r = rate_with_ip_qty(10, 5, 13, 0, 0); // 13 IPs × 5 = 65
+    let r = rate_with_ip_qty(10.0, 5.0, 13, 0.0, 0.0); // 13 IPs × 5 = 65
     let port_95ths: Vec<(Port, Option<f64>)> =
         ports.iter().cloned().map(|p| (p, Some(0.0))).collect();
     let (_, total) = build_invoice_lines(&port_95ths, &r);
     // 端口费用 0,IP 总 13*5 = 65
-    assert_eq!(total, 65);
+    assert_eq!(total, 65.0);
 }

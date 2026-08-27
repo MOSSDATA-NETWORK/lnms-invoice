@@ -1,25 +1,7 @@
 {% extends "base.html" %}
-{% block title %}客户管理 · lnms-invoice{% endblock %}
+{% block title %}客户管理 · {{ site_title }}{% endblock %}
 {% block sidebar %}
-<aside class="sidebar">
-  <div class="sidebar-brand"><span class="dot"></span>lnms-invoice</div>
-  <div class="sidebar-section">管理</div>
-  <nav>
-    <a href="/admin">概况</a>
-    <a href="/admin/instances">LibreNMS 实例</a>
-    <a href="/admin/customers" class="active">客户</a>
-    <a href="/admin/rates">费用</a>
-    <a href="/admin/templates">模板</a>
-    <a href="/admin/settings">设置</a>
-  </nav>
-  <div class="sidebar-section">账号</div>
-  <nav>
-    <a href="/">返回客户视图</a>
-    <form method="post" action="/logout" style="margin: 4px 0 0">
-      <button type="submit" class="btn btn-sm" style="width: 100%">退出登录</button>
-    </form>
-  </nav>
-</aside>
+{% include "admin/_sidebar.html" %}
 {% endblock %}
 {% block body %}
 <div class="topbar">

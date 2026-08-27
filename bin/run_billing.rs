@@ -7,7 +7,7 @@
 //!     - 取 LibreNMS 实例 + 解密 token
 //!     - 拉取 bill history → 95th Mbps
 //!     - 取端口列表 + 适用费率
-//!     - 组合 PortLine + total_cents + chart PNG
+//!     - 组合 PortLine + total_yuan + chart PNG
 //!     - 调 `InvoiceService::generate_preview` 落盘 + 状态机
 //!     - 写一条 `invoice_runs` 记录
 //! 4. 统计成功/失败,非零退出码用于 systemd 触发告警
@@ -244,7 +244,7 @@ async fn run(cfg: &AppConfig, force: bool) -> anyhow::Result<Stats> {
             .iter()
             .filter_map(|(_, m)| *m)
             .fold(0.0_f64, f64::max);
-        let (lines, total_cents) = build_invoice_lines(&port_95ths, &rate);
+        let (lines, total_yuan) = build_invoice_lines(&port_95ths, &rate);
 
         // 发票号:后台可配模板(settings.invoice_no_template),占位符
         // {KEY} 客户标识 / {YYYY} 年 / {MM} 月 / {SEQ} 4 位流水号(sequence 表,决策 #14)
@@ -274,7 +274,7 @@ async fn run(cfg: &AppConfig, force: bool) -> anyhow::Result<Stats> {
                 &invoice_no,
                 "模板.xlsx",
                 lines,
-                total_cents,
+                total_yuan,
                 chart_png,
             )
             .await

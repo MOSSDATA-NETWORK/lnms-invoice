@@ -105,14 +105,14 @@ async fn main() -> ExitCode {
 
     // 3. 端口
     if let Err(e) = store
-        .insert_port(cust_id, "华为BGP 3段", 8, 0, false, true, None)
+        .insert_port_with_bill(cust_id, "华为BGP 3段", 8, 0, false, true, None, None)
         .await
     {
         eprintln!("insert port 1: {e:#}");
         return ExitCode::from(1);
     }
     if let Err(e) = store
-        .insert_port(cust_id, "联通BGP 1段", 0, 4, true, false, None)
+        .insert_port_with_bill(cust_id, "联通BGP 1段", 0, 4, true, false, None, None)
         .await
     {
         eprintln!("insert port 2: {e:#}");
@@ -125,11 +125,11 @@ async fn main() -> ExitCode {
             customer_id: cust_id,
             effective_from: "2026-01-01",
             effective_to: None,
-            mbps_unit_price_cents: 10,
-            ip_unit_price_cents: 5,
+            mbps_unit_price_yuan: 0.10,
+            ip_unit_price_yuan: 0.05,
             ip_quantity: 0,
-            machine_rent_cents: 50000,
-            machine_hosting_cents: 30000,
+            machine_rent_yuan: 500.00,
+            machine_hosting_yuan: 300.00,
             currency: "CNY",
             librenms_bill_id: None,
             business_label: None,

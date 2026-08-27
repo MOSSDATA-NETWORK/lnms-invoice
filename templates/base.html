@@ -115,35 +115,6 @@
     /* Topbar (page header) */
     .topbar {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      padding: 32px 40px 18px;
-      gap: 16px;
-    }
-    .topbar h1 { margin: 0; }
-    .topbar .subtitle {
-      color: var(--text-secondary);
-      font-size: 13px;
-      margin-top: 4px;
-    }
-    .topbar .actions {
-      display: flex; gap: 8px; align-items: center;
-    }
-    .topbar .user {
-      display: flex; align-items: center; gap: 10px;
-      color: var(--text-secondary);
-      font-size: 13px;
-    }
-    .topbar .user .avatar {
-      width: 26px; height: 26px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent), #5856D6);
-      color: #fff; font-size: 12px; font-weight: 600;
-      display: inline-flex; align-items: center; justify-content: center;
-    }
-
-    /* Topbar (page header row) */
-    .topbar {
-      display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 16px;
@@ -174,6 +145,12 @@
       gap: 10px;
       font-size: 14px;
       color: var(--text-secondary);
+    }
+    .topbar .user .avatar {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #5856D6);
+      color: #fff; font-size: 12px; font-weight: 600;
+      display: inline-flex; align-items: center; justify-content: center;
     }
 
     .page {
@@ -281,7 +258,7 @@
     }
     .form-actions {
       margin-top: 24px;
-      display: flex; gap: 8px;
+      display: flex; gap: 8px; align-items: center;
     }
 
     /* Cards */
@@ -356,12 +333,11 @@
     .data-table tbody td {
       padding: 14px 20px;
       font-size: 14px;
+      color: var(--text);
       border-bottom: 1px solid var(--separator);
       border-right: 1px solid var(--separator);
     }
     .data-table tbody td:last-child { border-right: none; }
-      color: var(--text);
-    }
     .data-table tbody tr:last-child td { border-bottom: none; }
     .data-table tbody tr:hover { background: rgba(0, 0, 0, 0.02); }
     .data-table tbody td.num { text-align: right; font-feature-settings: "tnum" 1; }

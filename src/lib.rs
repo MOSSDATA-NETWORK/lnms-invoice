@@ -7,7 +7,6 @@ pub mod config;
 pub mod error;
 pub mod store;
 pub mod librenms;
-pub mod domain;
 pub mod template;
 pub mod runner;
 pub mod chart;

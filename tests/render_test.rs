@@ -98,7 +98,7 @@ fn test_fill_template_writes_invoice_and_ports() {
                 machine_hosting: false,
             },
         ],
-        total_cents: 1270000, // ¥12,700.00
+        total_yuan: 12700.00, // ¥12,700.00
         currency: "CNY".into(),
     };
 

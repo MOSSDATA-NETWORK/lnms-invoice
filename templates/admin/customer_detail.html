@@ -1,25 +1,7 @@
 {% extends "base.html" %}
-{% block title %}{{ customer.name }} · lnms-invoice{% endblock %}
+{% block title %}{{ customer.name }} · {{ site_title }}{% endblock %}
 {% block sidebar %}
-<aside class="sidebar">
-  <div class="sidebar-brand"><span class="dot"></span>lnms-invoice</div>
-  <div class="sidebar-section">管理</div>
-  <nav>
-    <a href="/admin">概况</a>
-    <a href="/admin/instances">LibreNMS 实例</a>
-    <a href="/admin/customers" class="active">客户</a>
-    <a href="/admin/rates">费用</a>
-    <a href="/admin/templates">模板</a>
-    <a href="/admin/settings">设置</a>
-  </nav>
-  <div class="sidebar-section">账号</div>
-  <nav>
-    <a href="/">返回客户视图</a>
-    <form method="post" action="/logout" style="margin: 4px 0 0">
-      <button type="submit" class="btn btn-sm" style="width: 100%">退出登录</button>
-    </form>
-  </nav>
-</aside>
+{% include "admin/_sidebar.html" %}
 {% endblock %}
 {% block body %}
 <div class="topbar">
@@ -157,25 +139,14 @@
       <span class="count">{{ rates.len() }}</span>
     </div>
     <table class="data-table">
-      <colgroup>
-        <col style="width: 50px" />
-        <col />
-        <col style="width: 160px" />
-        <col style="width: 100px" />
-        <col style="width: 100px" />
-        <col style="width: 100px" />
-        <col style="width: 80px" />
-        <col />
-      </colgroup>
       <thead>
         <tr>
-          <th>序号</th>
+          <th style="width: 50px">序号</th>
+          <th>时间周期</th>
           <th>业务名称</th>
-          <th>时间</th>
           <th class="num">数量</th>
           <th class="num">单价</th>
           <th class="num">总价</th>
-          <th>币种</th>
           <th>备注</th>
         </tr>
       </thead>
@@ -183,18 +154,17 @@
       {% for r in rates %}
         <tr>
           <td class="muted">{{ loop.index }}</td>
-          <td>{{ r.business_label.as_deref().unwrap_or("—") }}</td>
           <td class="muted">{{ r.effective_from }}{% match r.effective_to %}{% when Some with (t) %} ~ {{ t }}{% when None %} ~ 至今{% endmatch %}</td>
+          <td>{{ r.business_label.as_deref().unwrap_or("—") }}</td>
           <td class="num">{% if r.ip_quantity == 0 %}—{% else %}{{ r.ip_quantity }}{% endif %}</td>
-          <td class="num">{{ r.mbps_unit_price_cents }}</td>
-          <td class="num">{% if r.ip_quantity == 0 %}—{% else %}{{ r.ip_quantity * r.mbps_unit_price_cents }}{% endif %}</td>
-          <td class="muted">{{ r.currency }}</td>
+          <td class="num">{{ format!("{:.2}", r.mbps_unit_price_yuan) }}</td>
+          <td class="num">{% if r.ip_quantity == 0 %}—{% else %}{{ format!("{:.2}", r.ip_quantity as f64 * r.mbps_unit_price_yuan) }}{% endif %}</td>
           <td class="muted">
             {%- if !r.notes.is_empty() %}{{ r.notes }}{% else %}—{% endif -%}
           </td>
         </tr>
       {% else %}
-        <tr><td colspan="8"><div class="empty">还没有费用 · <a href="/admin/rates">新增费用</a></div></td></tr>
+        <tr><td colspan="7"><div class="empty">还没有费用 · <a href="/admin/rates">新增费用</a></div></td></tr>
       {% endfor %}
       </tbody>
     </table>

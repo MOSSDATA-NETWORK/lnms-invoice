@@ -1,25 +1,7 @@
 {% extends "base.html" %}
-{% block title %}LibreNMS 实例 · lnms-invoice{% endblock %}
+{% block title %}LibreNMS 实例 · {{ site_title }}{% endblock %}
 {% block sidebar %}
-<aside class="sidebar">
-  <div class="sidebar-brand"><span class="dot"></span>lnms-invoice</div>
-  <div class="sidebar-section">管理</div>
-  <nav>
-    <a href="/admin">概况</a>
-    <a href="/admin/instances" class="active">LibreNMS 实例</a>
-    <a href="/admin/customers">客户</a>
-    <a href="/admin/rates">费用</a>
-    <a href="/admin/templates">模板</a>
-    <a href="/admin/settings">设置</a>
-  </nav>
-  <div class="sidebar-section">账号</div>
-  <nav>
-    <a href="/">返回客户视图</a>
-    <form method="post" action="/logout" style="margin: 4px 0 0">
-      <button type="submit" class="btn btn-sm" style="width: 100%">退出登录</button>
-    </form>
-  </nav>
-</aside>
+{% include "admin/_sidebar.html" %}
 {% endblock %}
 {% block body %}
 <div class="topbar">
@@ -142,19 +124,6 @@
       {% endfor %}
       </tbody>
     </table>
-  </div>
-
-  <h2 style="margin-top: 32px">关于 token 注入</h2>
-  <div class="card">
-    <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 12px">
-      token 已可通过 Web 直接填写(<code>type="password"</code> 防止旁观者窥屏,autocomplete 已关闭)。
-      也可保留服务器端注入路径,以便在没有 Web UI 的环境上操作:
-    </p>
-    <pre style="background: rgba(0,0,0,0.04); padding: 12px 16px; border-radius: 8px; font-size: 13px; overflow-x: auto"><code>echo -n '&lt;token&gt;' | sudo /usr/local/bin/set-instance-token &lt;db-path&gt; &lt;instance-name&gt;</code></pre>
-    <p style="color: var(--text-tertiary); font-size: 13px; margin-top: 12px">
-      <strong>注意</strong>:Web 提交后 token 会以原始字节进入 <code>api_token_enc</code> 列(未做对称加密)。
-      部署必须强制 HTTPS,DB 文件及其备份视为敏感凭据,不要推到不信任的位置。
-    </p>
   </div>
 </div>
 {% endblock %}

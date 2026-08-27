@@ -228,7 +228,7 @@ struct InvoiceRow {
     period: String,
     status: String,
     invoice_no: String,
-    total_cents: Option<i64>,
+    total_yuan: Option<f64>,
     currency: String,
 }
 
@@ -239,7 +239,6 @@ struct InvoiceTpl<'a> {
     customer_name: &'a str,
     period_label: String,
     total_yuan: String,
-    total_frac: String,
 }
 
 #[derive(Template)]
@@ -405,7 +404,7 @@ async fn get_customer(
             period: format!("{:04}-{:02}", inv.period_year, inv.period_month),
             status: inv.status.as_str().to_string(),
             invoice_no: inv.invoice_no,
-            total_cents: inv.total_cents,
+            total_yuan: inv.total_yuan,
             currency: inv.currency,
         })
         .collect();
@@ -446,9 +445,9 @@ async fn get_invoice(
         _ => return error_page("客户不存在"),
     };
     let period_label = format!("{:04}-{:02}", inv.period_year, inv.period_month);
-    let (total_yuan, total_frac) = match inv.total_cents {
-        Some(c) => (format!("{}", c / 100), format!("{:02}", c % 100)),
-        None => (String::new(), String::new()),
+    let total_yuan = match inv.total_yuan {
+        Some(c) => format!("{:.2}", c),
+        None => String::new(),
     };
     Html(
         InvoiceTpl {
@@ -456,7 +455,6 @@ async fn get_invoice(
             customer_name: &customer.name,
             period_label,
             total_yuan,
-            total_frac,
         }
         .render()
         .unwrap_or_else(|_| "template error".into()),
@@ -623,6 +621,8 @@ async fn require_admin(state: &WebState, headers: &HeaderMap) -> Result<User> {
 #[template(path = "admin/home.html")]
 struct AdminHomeTpl<'a> {
     username: &'a str,
+    site_title: &'a str,
+    active_page: &'a str,
     counts: AdminCounts,
 }
 
@@ -637,6 +637,8 @@ struct AdminCounts {
 #[template(path = "admin/instances.html")]
 struct AdminInstancesTpl<'a> {
     username: &'a str,
+    site_title: &'a str,
+    active_page: &'a str,
     instances: Vec<InstanceRow>,
     error: Option<String>,
 }
@@ -653,6 +655,8 @@ struct InstanceRow {
 #[template(path = "admin/customers.html")]
 struct AdminCustomersTpl<'a> {
     username: &'a str,
+    site_title: &'a str,
+    active_page: &'a str,
     customers: Vec<AdminCustomerRow>,
 }
 
@@ -668,9 +672,11 @@ struct AdminCustomerRow {
 #[template(path = "admin/customer_detail.html")]
 struct AdminCustomerDetailTpl<'a> {
     username: &'a str,
+    site_title: &'a str,
+    active_page: &'a str,
     customer: Customer,
     ports: Vec<AdminPortRow>,
-    rates: Vec<AdminRateRow>,
+    rates: Vec<AdminRateWithCustomerRow>,
 }
 
 struct AdminPortRow {
@@ -681,34 +687,21 @@ struct AdminPortRow {
     librenms_bill_id: Option<i64>,
 }
 
-struct AdminRateRow {
-    id: i64,
-    effective_from: String,
-    effective_to: Option<String>,
-    mbps_unit_price_cents: i64,
-    ip_unit_price_cents: i64,
-    ip_quantity: i64,
-    machine_rent_cents: i64,
-    machine_hosting_cents: i64,
-    currency: String,
-    librenms_bill_id: Option<i64>,
-    business_label: Option<String>,
-    notes: String,
-}
-
 #[derive(Template)]
 #[template(path = "admin/rates.html")]
 struct AdminRatesTpl<'a> {
     username: &'a str,
+    site_title: &'a str,
+    active_page: &'a str,
     rates: Vec<AdminRateWithCustomerRow>,
     customer_options: Vec<AdminCustomerOption>,
     new_form_effective_from: &'a str,
     new_form_effective_to: &'a str,
-    new_form_mbps_unit_price_cents: &'a str,
-    new_form_ip_unit_price_cents: &'a str,
+    new_form_mbps_unit_price_yuan: &'a str,
+    new_form_ip_unit_price_yuan: &'a str,
     new_form_ip_quantity: &'a str,
-    new_form_machine_rent_cents: &'a str,
-    new_form_machine_hosting_cents: &'a str,
+    new_form_machine_rent_yuan: &'a str,
+    new_form_machine_hosting_yuan: &'a str,
     new_form_currency: &'a str,
     new_form_business_label: &'a str,
     new_form_notes: &'a str,
@@ -720,11 +713,11 @@ struct AdminRateWithCustomerRow {
     customer_internal_key: String,
     effective_from: String,
     effective_to: Option<String>,
-    mbps_unit_price_cents: i64,
-    ip_unit_price_cents: i64,
+    mbps_unit_price_yuan: f64,
+    ip_unit_price_yuan: f64,
     ip_quantity: i64,
-    machine_rent_cents: i64,
-    machine_hosting_cents: i64,
+    machine_rent_yuan: f64,
+    machine_hosting_yuan: f64,
     currency: String,
     librenms_bill_id: Option<i64>,
     business_label: Option<String>,
@@ -763,6 +756,8 @@ async fn get_admin_home(
     Html(
         AdminHomeTpl {
             username: &user.username,
+            site_title: &read_admin_site_title(store).await,
+            active_page: "home",
             counts,
         }
         .render()
@@ -801,6 +796,8 @@ async fn get_admin_instances(
     Html(
         AdminInstancesTpl {
             username: &user.username,
+            site_title: &read_admin_site_title(store).await,
+            active_page: "instances",
             instances: rows,
             error: None,
         }
@@ -836,6 +833,8 @@ async fn get_admin_customers(
     Html(
         AdminCustomersTpl {
             username: &user.username,
+            site_title: &read_admin_site_title(store).await,
+            active_page: "customers",
             customers: rows,
         }
         .render()
@@ -872,20 +871,21 @@ async fn get_admin_customer_detail(
             librenms_bill_id: p.librenms_bill_id,
         })
         .collect();
-    let rates: Vec<AdminRateRow> = store
+    let rates: Vec<AdminRateWithCustomerRow> = store
         .list_rates_for_customer(id)
         .await
         .unwrap_or_default()
         .into_iter()
-        .map(|r| AdminRateRow {
+        .map(|r| AdminRateWithCustomerRow {
             id: r.id,
+            customer_internal_key: String::new(),
             effective_from: r.effective_from,
             effective_to: r.effective_to,
-            mbps_unit_price_cents: r.mbps_unit_price_cents,
-            ip_unit_price_cents: r.ip_unit_price_cents,
+            mbps_unit_price_yuan: r.mbps_unit_price_yuan,
+            ip_unit_price_yuan: r.ip_unit_price_yuan,
             ip_quantity: r.ip_quantity,
-            machine_rent_cents: r.machine_rent_cents,
-            machine_hosting_cents: r.machine_hosting_cents,
+            machine_rent_yuan: r.machine_rent_yuan,
+            machine_hosting_yuan: r.machine_hosting_yuan,
             currency: r.currency,
             librenms_bill_id: r.librenms_bill_id,
             business_label: r.business_label,
@@ -896,6 +896,8 @@ async fn get_admin_customer_detail(
     Html(
         AdminCustomerDetailTpl {
             username: &user.username,
+            site_title: &read_admin_site_title(store).await,
+            active_page: "customers",
             customer: customer_row,
             ports,
             rates,
@@ -957,11 +959,11 @@ async fn get_admin_rates(
                 .unwrap_or_else(|| format!("id={}", r.customer_id)),
             effective_from: r.effective_from,
             effective_to: r.effective_to,
-            mbps_unit_price_cents: r.mbps_unit_price_cents,
-            ip_unit_price_cents: r.ip_unit_price_cents,
+            mbps_unit_price_yuan: r.mbps_unit_price_yuan,
+            ip_unit_price_yuan: r.ip_unit_price_yuan,
             ip_quantity: r.ip_quantity,
-            machine_rent_cents: r.machine_rent_cents,
-            machine_hosting_cents: r.machine_hosting_cents,
+            machine_rent_yuan: r.machine_rent_yuan,
+            machine_hosting_yuan: r.machine_hosting_yuan,
             currency: r.currency,
             librenms_bill_id: r.librenms_bill_id,
             business_label: r.business_label,
@@ -979,15 +981,17 @@ async fn get_admin_rates(
     Html(
         AdminRatesTpl {
             username: &user.username,
+            site_title: &read_admin_site_title(store).await,
+            active_page: "rates",
             rates: rate_rows,
             customer_options,
             new_form_effective_from: "",
             new_form_effective_to: "",
-            new_form_mbps_unit_price_cents: "",
-            new_form_ip_unit_price_cents: "",
+            new_form_mbps_unit_price_yuan: "",
+            new_form_ip_unit_price_yuan: "",
             new_form_ip_quantity: "0",
-            new_form_machine_rent_cents: "0",
-            new_form_machine_hosting_cents: "0",
+            new_form_machine_rent_yuan: "0",
+            new_form_machine_hosting_yuan: "0",
             new_form_currency: "CNY",
             new_form_business_label: "",
             new_form_notes: "",
@@ -1004,15 +1008,19 @@ struct NewRateFormIn {
     customer_id: i64,
     effective_from: String,
     effective_to: Option<String>,
-    mbps_unit_price_cents: i64,
-    ip_unit_price_cents: i64,
-    /// IP 数量(v0.6.3 起在费用表单上直接维护,不再从端口累加)
+    mbps_unit_price_yuan: f64,
+    #[serde(default)]
+    ip_unit_price_yuan: f64,
+    /// IP 数量(直接维护在费用表单上,不从端口累加)
+    #[serde(default)]
     ip_quantity: i64,
-    machine_rent_cents: i64,
-    machine_hosting_cents: i64,
+    #[serde(default)]
+    machine_rent_yuan: f64,
+    #[serde(default)]
+    machine_hosting_yuan: f64,
     currency: String,
     librenms_bill_id: Option<String>,
-    /// v0.6.4: 业务名称/备注(纯元数据,不参与计费)
+    /// 业务名称/备注(纯元数据,不参与计费)
     #[serde(default)]
     business_label: Option<String>,
     /// 用户自定义备注
@@ -1068,11 +1076,11 @@ async fn post_admin_rate_create(
         customer_id: customer.id,
         effective_from: &form.effective_from,
         effective_to,
-        mbps_unit_price_cents: form.mbps_unit_price_cents,
-        ip_unit_price_cents: form.ip_unit_price_cents,
+        mbps_unit_price_yuan: form.mbps_unit_price_yuan.max(0.0),
+        ip_unit_price_yuan: form.ip_unit_price_yuan.max(0.0),
         ip_quantity: form.ip_quantity.max(0),
-        machine_rent_cents: form.machine_rent_cents,
-        machine_hosting_cents: form.machine_hosting_cents,
+        machine_rent_yuan: form.machine_rent_yuan.max(0.0),
+        machine_hosting_yuan: form.machine_hosting_yuan.max(0.0),
         currency: &form.currency,
         librenms_bill_id,
         business_label,
@@ -1224,6 +1232,8 @@ async fn post_admin_instance_delete(
 #[template(path = "admin/customer_form.html")]
 struct AdminCustomerFormTpl<'a> {
     username: &'a str,
+    site_title: &'a str,
+    active_page: &'a str,
     mode: &'a str, // "new" | "edit"
     customer: Customer,
     instances: Vec<crate::store::LibreNmsInstance>,
@@ -1235,6 +1245,8 @@ struct AdminCustomerFormTpl<'a> {
 #[template(path = "admin/instance_bills.html")]
 struct AdminInstanceBillsTpl<'a> {
     username: &'a str,
+    site_title: &'a str,
+    active_page: &'a str,
     instance_name: String,
     bills: Vec<crate::librenms::BillSummary>,
     error: Option<String>,
@@ -1244,6 +1256,8 @@ struct AdminInstanceBillsTpl<'a> {
 #[template(path = "admin/templates.html")]
 struct AdminTemplatesTpl<'a> {
     username: &'a str,
+    site_title: &'a str,
+    active_page: &'a str,
     versions: Vec<crate::store::TemplateVersionRow>,
     customer_counts: std::collections::HashMap<String, i64>,
     error: Option<String>,
@@ -1253,6 +1267,7 @@ struct AdminTemplatesTpl<'a> {
 
 #[derive(Deserialize)]
 struct AdminSettingsForm {
+    site_title: String,
     billing_day: String,
     billing_hour: String,
     invoice_no_template: String,
@@ -1262,6 +1277,9 @@ struct AdminSettingsForm {
 #[template(path = "admin/settings.html")]
 struct AdminSettingsTpl<'a> {
     username: &'a str,
+    site_title: &'a str,
+    active_page: &'a str,
+    default_site_title: &'a str,
     billing_day: u32,
     billing_hour: u32,
     invoice_no_template: &'a str,
@@ -1316,6 +1334,8 @@ async fn render_customer_form(
     let templates = state.svc.store().list_template_versions().await?;
     let tpl = AdminCustomerFormTpl {
         username,
+        site_title: &state.svc.store().get_setting(ADMIN_SETTING_SITE_TITLE).await.ok().flatten().unwrap_or_default(),
+        active_page: "customers",
         mode,
         customer,
         instances,
@@ -1659,6 +1679,8 @@ async fn get_admin_instance_bills(
     Html(
         AdminInstanceBillsTpl {
             username: &user.username,
+            site_title: &read_admin_site_title(store).await,
+            active_page: "instances",
             instance_name: inst.name.clone(),
             bills,
             error,
@@ -1738,6 +1760,8 @@ async fn get_admin_templates(
     Html(
         AdminTemplatesTpl {
             username: &user.username,
+            site_title: &read_admin_site_title(store).await,
+            active_page: "templates",
             versions,
             customer_counts: counts,
             error: None,
@@ -1815,20 +1839,22 @@ impl Invoice {
         format!("{:04}-{:02}", self.period_year, self.period_month)
     }
     pub fn total_yuan(&self) -> String {
-        match self.total_cents {
-            Some(c) => format!("{}.{:02}", c / 100, c % 100),
+        match self.total_yuan {
+            Some(c) => format!("{:.2}", c),
             None => "-".to_string(),
         }
     }
 }
 
 // ============================================================
-// 后台 /admin/settings(出账日 / 出账时刻 / 发票号模板)
+// 后台 /admin/settings(出账日 / 出账时刻 / 发票号模板 / 网站标题)
 // ============================================================
 
+const ADMIN_SETTING_SITE_TITLE: &str = "site_title";
 const ADMIN_SETTING_BILLING_DAY: &str = "billing_day";
 const ADMIN_SETTING_BILLING_HOUR: &str = "billing_hour";
 const ADMIN_SETTING_INVOICE_NO_TEMPLATE: &str = "invoice_no_template";
+const ADMIN_DEFAULT_SITE_TITLE: &str = "lnms-invoice";
 const ADMIN_DEFAULT_INVOICE_NO_TEMPLATE: &str = "INV-{KEY}-{YYYY}-{MM}-{SEQ}";
 
 async fn read_admin_setting_u32(store: &crate::store::Store, key: &str) -> u32 {
@@ -1848,6 +1874,13 @@ async fn read_admin_invoice_template(store: &crate::store::Store) -> String {
     }
 }
 
+async fn read_admin_site_title(store: &crate::store::Store) -> String {
+    match store.get_setting(ADMIN_SETTING_SITE_TITLE).await {
+        Ok(Some(v)) if !v.trim().is_empty() => v.trim().to_string(),
+        _ => ADMIN_DEFAULT_SITE_TITLE.to_string(),
+    }
+}
+
 async fn get_admin_settings(
     State(state): State<Arc<WebState>>,
     headers: HeaderMap,
@@ -1857,12 +1890,16 @@ async fn get_admin_settings(
         Err(_) => return Redirect::to("/login").into_response(),
     };
     let store = state.svc.store();
+    let site_title = read_admin_site_title(store).await;
     let billing_day = read_admin_setting_u32(store, ADMIN_SETTING_BILLING_DAY).await;
     let billing_hour = read_admin_setting_u32(store, ADMIN_SETTING_BILLING_HOUR).await;
     let invoice_no_template = read_admin_invoice_template(store).await;
     Html(
         AdminSettingsTpl {
             username: &user.username,
+            site_title: &site_title,
+            active_page: "settings",
+            default_site_title: ADMIN_DEFAULT_SITE_TITLE,
             billing_day,
             billing_hour,
             invoice_no_template: &invoice_no_template,
@@ -1887,6 +1924,9 @@ async fn post_admin_settings(
     };
     let store = state.svc.store();
 
+    // 0. 网站标题(可选,留空用默认)
+    let site_title = form.site_title.trim().to_string();
+
     // 1. 解析并 clamp:day ∈ [1,28](>28 的月份会溢出,统一限到 28);hour ∈ [0,23]
     let day: u32 = match form.billing_day.trim().parse::<u32>() {
         Ok(n) if n >= 1 && n <= 28 => n,
@@ -1894,6 +1934,7 @@ async fn post_admin_settings(
             let invoice_no_template = read_admin_invoice_template(store).await;
             return render_admin_settings_error(
                 &user,
+                &site_title,
                 &invoice_no_template,
                 "出账日必须为 1–28 的整数(避免 2 月/30 天月份日期溢出)",
             );
@@ -1905,6 +1946,7 @@ async fn post_admin_settings(
             let invoice_no_template = read_admin_invoice_template(store).await;
             return render_admin_settings_error(
                 &user,
+                &site_title,
                 &invoice_no_template,
                 "出账时刻必须为 0–23 的整数",
             );
@@ -1915,6 +1957,7 @@ async fn post_admin_settings(
         let invoice_no_template = read_admin_invoice_template(store).await;
         return render_admin_settings_error(
             &user,
+            &site_title,
             &invoice_no_template,
             "发票号模板不能为空",
         );
@@ -1924,15 +1967,25 @@ async fn post_admin_settings(
         let invoice_no_template = read_admin_invoice_template(store).await;
         return render_admin_settings_error(
             &user,
+            &site_title,
             &invoice_no_template,
             "发票号模板必须包含 {SEQ} 占位符",
         );
     }
 
     // 2. 写 settings 表(失败回表单)
+    if let Err(e) = store.set_setting(ADMIN_SETTING_SITE_TITLE, &site_title).await {
+        return render_admin_settings_error(
+            &user,
+            &site_title,
+            &tpl,
+            &format!("保存网站标题失败: {e}"),
+        );
+    }
     if let Err(e) = store.set_setting(ADMIN_SETTING_BILLING_DAY, &day.to_string()).await {
         return render_admin_settings_error(
             &user,
+            &site_title,
             &tpl,
             &format!("保存出账日失败: {e}"),
         );
@@ -1940,6 +1993,7 @@ async fn post_admin_settings(
     if let Err(e) = store.set_setting(ADMIN_SETTING_BILLING_HOUR, &hour.to_string()).await {
         return render_admin_settings_error(
             &user,
+            &site_title,
             &tpl,
             &format!("保存出账时刻失败: {e}"),
         );
@@ -1947,6 +2001,7 @@ async fn post_admin_settings(
     if let Err(e) = store.set_setting(ADMIN_SETTING_INVOICE_NO_TEMPLATE, &tpl).await {
         return render_admin_settings_error(
             &user,
+            &site_title,
             &tpl,
             &format!("保存发票号模板失败: {e}"),
         );
@@ -1956,6 +2011,9 @@ async fn post_admin_settings(
     Html(
         AdminSettingsTpl {
             username: &user.username,
+            site_title: &site_title,
+            active_page: "settings",
+            default_site_title: ADMIN_DEFAULT_SITE_TITLE,
             billing_day: day,
             billing_hour: hour,
             invoice_no_template: &tpl,
@@ -1971,12 +2029,16 @@ async fn post_admin_settings(
 
 fn render_admin_settings_error(
     user: &crate::store::User,
+    current_site_title: &str,
     current_tpl: &str,
     msg: &str,
 ) -> Response {
     Html(
         AdminSettingsTpl {
             username: &user.username,
+            site_title: current_site_title,
+            active_page: "settings",
+            default_site_title: ADMIN_DEFAULT_SITE_TITLE,
             // 错误情况下显示 1 / 10 是因为我们没回读数据库,避免再炸一次
             billing_day: 1,
             billing_hour: 10,

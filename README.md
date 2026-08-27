@@ -70,7 +70,7 @@ lnms-invoice/
 | 8g 后台设置(出账日/时刻/发票号模板)+ 定时自检 | ✅ |
 | 9 端到端(真实环境跑一个月) | ⏳ 待资产齐全 |
 
-实施期共 93 个测试通过(本轮 v0.6.2 新增 8 项:3 个 store settings/has_invoice_for_period + 3 个 render_invoice_no/is_due + 2 个 web /admin/settings 模板渲染)。Codex 评审暂未走用户授权的双签流程(本轮 UI 重构属失效模式封闭的改动,按用户授权独立处理)。
+实施期共 99 个测试通过(本轮 v0.6.5 全量改单位 + 撤回 v0.6.4 保底/business_label,未新增测试)。Codex 评审暂未走用户授权的双签流程(本轮单位重构属失效模式封闭的改动,按用户授权独立处理)。
 
 ## 阶段 0 准备清单(进生产前必须齐)
 
@@ -175,6 +175,8 @@ sudo -u lnms-invoice sqlite3 /var/lib/lnms-invoice/db.sqlite ".backup /var/backu
 
 ## 变更记录
 
+- **2026-08-27 v0.6.5**:金额单位从「分(整数)」改为「元(REAL,保留 2 位小数)」——`mbps_unit_price` / `ip_unit_price` / `machine_rent` / `machine_hosting` / `invoices.total` / `invoice_lines.line_total` 全部改元,列名 `*_cents → *_yuan`,类型 `INTEGER → REAL`,迁移 `20260208000000_amount_unit_to_yuan.sql`(建新表 + `INSERT ... SELECT ... / 100.0` + DROP + RENAME,空表 noop,非空表正确 ÷100);表单 `<input step="0.01">`,placeholder/说明文案「¥分」→「¥元」,展示用 `format!("{:.2}", ...)`;渲染 Excel `D5` 单元格直接 `set_value_number(data.total_yuan)`(不再 `× 100`)。**v0.6.5 同期撤回 v0.6.4 的保底与业务标注**:`rates.monthly_guarantee_yuan` / `guarantee_floor_mbps` / `business_label` 三列 DROP(`20260209000000_drop_guarantee_and_business_label.sql`),billing 回到 v0.6.3 简单求和(`mbps_95th × 单价 + 机柜费 + IP 费`),表单/列表去掉 3 栏;运营如需手工调整金额,后续单独提需求(本期不实现「出账预览手动覆盖」);测试 99 通过、0 忽略
+- **2026-08-26 v0.6.4**:**已撤回**(见 v0.6.5);曾加「保底金额」字段 + 超额自动计算 + `business_label`,运营反馈表单变复杂且「超额自动算」不直观
 - **2026-08-26 v0.6.2**:后台设置页 `/admin/settings`(出账日 1–28 / 出账时刻 0–23 / 可配发票号模板,占位符 `{KEY}` `{YYYY}` `{MM}` `{SEQ}` 必填),写 `settings` 表(settings 表迁移 `20260203000000_settings.sql`);`run-billing` 每次启动读 settings 自检「是否到出账日时」,未到期直接退出;`systemd timer` 由「每月 1 日 10:00」改为 `OnCalendar=hourly`(`install.sh` 同步),由 `run-billing` 自检 + `has_invoice_for_period` 幂等保证不会重复出账;新增 `--force` CLI 参数跳过自检(手动补账/测试用);测试 93 通过、0 忽略
 - **2026-08-26 v0.6.1**:「费率」更名「费用」并去掉「(分)」单位后缀;费用表单新增可选 LNMS bill_id(读取优先级:端口 > 费用 > 客户默认,迁移 `20260202000000_rate_bill_id`);**修复查看 bills 必崩问题**——LibreNmsClient(reqwest::blocking)的构造与请求整体移入 `spawn_blocking`,此前在 axum 异步上下文直接 panic,run-billing 同步修复;测试 85 通过、0 忽略
 - **2026-08-26 v0.6**:Web 后台客户 CRUD(新增/编辑/删除,删除前自动检查 ports + invoices 引用);per-port LNMS bill 绑定(`ports.librenms_bill_id` 可空,fallback 到客户默认 bill);`/admin/templates` 上传/审计(xlsx 自动 inspect 落 `template_versions`);`/admin/instances/:id/bills` + `/admin/ajax/bills` 把 NMS bills 接到客户表单下拉;模板管理(admin 可给客户绑模板);`build_invoice_lines` 改为 per-port 取 95th,`run-billing` 按 port 各自拉 history

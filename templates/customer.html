@@ -42,8 +42,8 @@
             {% endmatch %}
           </td>
           <td class="num">
-            {% if let Some(c) = inv.total_cents %}
-              <span class="money"><span class="sym">{{ inv.currency }}</span> {{ c / 100 }}.<span class="frac">{{ format!("{:02}", c % 100) }}</span></span>
+            {% if let Some(c) = inv.total_yuan %}
+              <span class="money"><span class="sym">{{ inv.currency }}</span> {{ format!("{:.2}", c) }}</span>
             {% else %}—{% endif %}
           </td>
           <td style="text-align: right">

@@ -30,10 +30,10 @@
 //!     {
 //!       "customer_internal_key": "A",
 //!       "effective_from": "2026-01-01",
-//!       "mbps_unit_price_cents": 10,
-//!       "ip_unit_price_cents": 5,
-//!       "machine_rent_cents": 500,
-//!       "machine_hosting_cents": 300,
+//!       "mbps_unit_price_yuan": 10,
+//!       "ip_unit_price_yuan": 5,
+//!       "machine_rent_yuan": 500,
+//!       "machine_hosting_yuan": 300,
 //!       "currency": "CNY"
 //!     }
 //!   ]
@@ -100,6 +100,8 @@ struct PortIn {
     #[serde(default)]
     machine_hosting: bool,
     #[serde(default)]
+    business_label: Option<String>,
+    #[serde(default)]
     notes: Option<String>,
 }
 
@@ -109,10 +111,10 @@ struct RateIn {
     effective_from: String,
     #[serde(default)]
     effective_to: Option<String>,
-    mbps_unit_price_cents: i64,
-    ip_unit_price_cents: i64,
-    machine_rent_cents: i64,
-    machine_hosting_cents: i64,
+    mbps_unit_price_yuan: f64,
+    ip_unit_price_yuan: f64,
+    machine_rent_yuan: f64,
+    machine_hosting_yuan: f64,
     currency: String,
 }
 
@@ -222,13 +224,14 @@ async fn import(
         stats.customers += 1;
         for p in &c.ports {
             store
-                .insert_port(
+                .insert_port_with_bill(
                     customer_id,
                     &p.label,
                     p.ip_count_a,
                     p.ip_count_b,
                     p.machine_rent,
                     p.machine_hosting,
+                    None,
                     p.notes.as_deref(),
                 )
                 .await?;
@@ -255,15 +258,15 @@ async fn import(
                 customer_id,
                 effective_from: &r.effective_from,
                 effective_to: r.effective_to.as_deref(),
-                mbps_unit_price_cents: r.mbps_unit_price_cents,
-                ip_unit_price_cents: r.ip_unit_price_cents,
+                mbps_unit_price_yuan: r.mbps_unit_price_yuan,
+                ip_unit_price_yuan: r.ip_unit_price_yuan,
                 ip_quantity: 0,
-                machine_rent_cents: r.machine_rent_cents,
-                machine_hosting_cents: r.machine_hosting_cents,
+                machine_rent_yuan: r.machine_rent_yuan,
+                machine_hosting_yuan: r.machine_hosting_yuan,
                 currency: &r.currency,
                 librenms_bill_id: None,
                 business_label: None,
-                notes: "",
+            notes: "",
             })
             .await?;
         stats.rates += 1;

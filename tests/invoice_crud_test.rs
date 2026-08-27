@@ -82,13 +82,13 @@ async fn test_invoice_lifecycle_happy_path() {
         .unwrap();
 
     store
-        .update_invoice_preview(id, 1_270_000, "/tmp/preview.pdf")
+        .update_invoice_preview(id, 12700.0, "/tmp/preview.pdf")
         .await
         .unwrap();
 
     let inv = store.find_invoice(id).await.unwrap().unwrap();
     assert_eq!(inv.status, InvoiceStatus::Preview);
-    assert_eq!(inv.total_cents, Some(1_270_000));
+    assert_eq!(inv.total_yuan, Some(12700.0));
     assert_eq!(inv.pdf_path_preview.as_deref(), Some("/tmp/preview.pdf"));
     assert!(inv.pdf_path_final.is_none());
     assert!(inv.confirmed_at.is_none());
@@ -131,7 +131,7 @@ async fn test_invoice_rejected_branch() {
         .await
         .unwrap();
     store
-        .update_invoice_preview(id, 100, "/tmp/p.pdf")
+        .update_invoice_preview(id, 1.0, "/tmp/p.pdf")
         .await
         .unwrap();
     store

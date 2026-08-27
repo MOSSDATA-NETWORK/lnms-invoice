@@ -1,25 +1,7 @@
 {% extends "base.html" %}
-{% block title %}后台设置 · lnms-invoice{% endblock %}
+{% block title %}后台设置 · {{ site_title }}{% endblock %}
 {% block sidebar %}
-<aside class="sidebar">
-  <div class="sidebar-brand"><span class="dot"></span>lnms-invoice</div>
-  <div class="sidebar-section">管理</div>
-  <nav>
-    <a href="/admin">概况</a>
-    <a href="/admin/instances">LibreNMS 实例</a>
-    <a href="/admin/customers">客户</a>
-    <a href="/admin/rates">费用</a>
-    <a href="/admin/templates">模板</a>
-    <a href="/admin/settings" class="active">设置</a>
-  </nav>
-  <div class="sidebar-section">账号</div>
-  <nav>
-    <a href="/">返回客户视图</a>
-    <form method="post" action="/logout" style="margin: 4px 0 0">
-      <button type="submit" class="btn btn-sm" style="width: 100%">退出登录</button>
-    </form>
-  </nav>
-</aside>
+{% include "admin/_sidebar.html" %}
 {% endblock %}
 {% block body %}
 <div class="topbar">
@@ -44,6 +26,26 @@
   {% endif %}
 
   <div class="card">
+    <div class="card-header"><h3>网站标题</h3></div>
+    <form method="post" action="/admin/settings">
+      <p style="margin-top: 0; margin-bottom: 16px; color: var(--text-tertiary); font-size: 13px">
+        自定义网站标题,显示在浏览器标签页和侧边栏品牌名称处。留空使用默认值。
+      </p>
+      <div class="form-row">
+        <label for="site_title">网站标题</label>
+        <input type="text" id="site_title" name="site_title"
+               value="{{ site_title }}" placeholder="{{ default_site_title }}" />
+        <div class="form-help">
+          默认:<code>{{ default_site_title }}</code>;修改后刷新页面生效
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">保存网站标题</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
     <div class="card-header"><h3>出账定时</h3></div>
     <form method="post" action="/admin/settings">
       <p style="margin-top: 0; color: var(--text-tertiary); font-size: 13px">
@@ -55,13 +57,13 @@
           <label for="billing_day">出账日(每月几号)</label>
           <input type="number" id="billing_day" name="billing_day"
                  min="1" max="28" value="{{ billing_day }}" required />
-          <div class="hint">1–28(避免 2 月 / 30 天月份日期溢出)</div>
+          <div class="form-help">1–28(避免 2 月 / 30 天月份日期溢出)</div>
         </div>
         <div class="form-row">
           <label for="billing_hour">出账时刻(几点, 24h)</label>
           <input type="number" id="billing_hour" name="billing_hour"
                  min="0" max="23" value="{{ billing_hour }}" required />
-          <div class="hint">0–23(server 本地时区,默认 Asia/Shanghai)</div>
+          <div class="form-help">0–23(server 本地时区,默认 Asia/Shanghai)</div>
         </div>
       </div>
       <div class="form-actions">
@@ -76,7 +78,7 @@
   <div class="card">
     <div class="card-header"><h3>发票号模板</h3></div>
     <form method="post" action="/admin/settings">
-      <p style="margin-top: 0; color: var(--text-tertiary); font-size: 13px">
+      <p style="margin-top: 0; margin-bottom: 16px; color: var(--text-tertiary); font-size: 13px">
         占位符:<code>{KEY}</code> 客户标识 / <code>{YYYY}</code> 4位年 / <code>{YY}</code> 2位年 / <code>{MM}</code> 2位月 /
         <code>{SEQ}</code> 4位流水号 / <code>{SEQ:N}</code> N位流水号(如 <code>{SEQ:3}</code> → 001)
       </p>
@@ -84,7 +86,7 @@
         <label for="invoice_no_template">发票号模板</label>
         <input type="text" id="invoice_no_template" name="invoice_no_template"
                value="{{ invoice_no_template }}" required />
-        <div class="hint">
+        <div class="form-help">
           至少包含 <code>{SEQ}</code>;示例:<code>MS{YY}{MM}{SEQ:3}</code> → MS2607001
         </div>
       </div>

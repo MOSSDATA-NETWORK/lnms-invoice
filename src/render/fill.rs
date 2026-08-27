@@ -17,7 +17,7 @@ pub struct InvoiceData {
     pub customer_name: String,
     pub period_label: String,    // "2026-08" 类
     pub ports: Vec<PortLine>,
-    pub total_cents: i64,
+    pub total_yuan: f64,
     pub currency: String,
 }
 
@@ -68,7 +68,7 @@ fn write_invoice_fields(sheet: &mut Worksheet, data: &InvoiceData) -> Result<()>
     sheet.cell_mut("D2").set_value(&data.invoice_no);
     sheet.cell_mut("D3").set_value(&data.customer_name);
     sheet.cell_mut("D4").set_value(&data.period_label);
-    sheet.cell_mut("D5").set_value_number(data.total_cents as f64 / 100.0);
+    sheet.cell_mut("D5").set_value_number(data.total_yuan);
     sheet.cell_mut("D6").set_value(&data.currency);
     Ok(())
 }
@@ -84,8 +84,8 @@ fn write_invoice_fields(sheet: &mut Worksheet, data: &InvoiceData) -> Result<()>
 ///   E = machine rent
 ///   F = machine hosting
 ///
-/// 注意:IP 总费用合计到 D5(InvoiceData.total_cents / 100),由 run-billing
-/// 在 build_invoice_lines 用 rate.ip_quantity × rate.ip_unit_price_cents 计算后并入。
+/// 注意:IP 总费用合计到 D5(InvoiceData.total_yuan 元,f64),由 run-billing
+/// 在 build_invoice_lines 用 rate.ip_quantity × rate.ip_unit_price_yuan 计算后并入。
 /// 模板若希望把 IP 费用作为单独行显示,需要单独修模板(超出本仓库范围)。
 fn write_port_rows(sheet: &mut Worksheet, ports: &[PortLine]) -> Result<()> {
     const FIRST_ROW: u32 = 9;

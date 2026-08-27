@@ -144,7 +144,7 @@ async fn test_port_crud() {
         .unwrap();
 
     let pid = store
-        .insert_port(cid, "华为BGP 3段", 8, 0, false, true, Some("备注"))
+        .insert_port_with_bill(cid, "华为BGP 3段", 8, 0, false, true, None, Some("备注"))
         .await
         .unwrap();
 
@@ -186,11 +186,11 @@ async fn test_rate_lookup_at_period() {
             customer_id: cid,
             effective_from: "2026-01-01",
             effective_to: Some("2026-06-30"),
-            mbps_unit_price_cents: 4350, // ¥43.50/Mbps
-            ip_unit_price_cents: 5000,
+            mbps_unit_price_yuan: 43.50, // ¥43.50/Mbps
+            ip_unit_price_yuan: 50.00,
             ip_quantity: 0,
-            machine_rent_cents: 0,
-            machine_hosting_cents: 10000,
+            machine_rent_yuan: 0.0,
+            machine_hosting_yuan: 100.00,
             currency: "CNY",
             librenms_bill_id: None,
             business_label: None,
@@ -203,11 +203,11 @@ async fn test_rate_lookup_at_period() {
             customer_id: cid,
             effective_from: "2026-07-01",
             effective_to: None,
-            mbps_unit_price_cents: 5000, // 涨价
-            ip_unit_price_cents: 5000,
+            mbps_unit_price_yuan: 50.00, // 涨价
+            ip_unit_price_yuan: 50.00,
             ip_quantity: 0,
-            machine_rent_cents: 0,
-            machine_hosting_cents: 10000,
+            machine_rent_yuan: 0.0,
+            machine_hosting_yuan: 100.00,
             currency: "CNY",
             librenms_bill_id: None,
             business_label: None,
@@ -222,7 +222,7 @@ async fn test_rate_lookup_at_period() {
         .await
         .unwrap()
         .expect("5 月应找到费率");
-    assert_eq!(r1.mbps_unit_price_cents, 4350);
+    assert_eq!(r1.mbps_unit_price_yuan, 43.50);
 
     // 2026-08 期 → 第二档(50)
     let r2 = store
@@ -230,7 +230,7 @@ async fn test_rate_lookup_at_period() {
         .await
         .unwrap()
         .expect("8 月应找到费率");
-    assert_eq!(r2.mbps_unit_price_cents, 5000);
+    assert_eq!(r2.mbps_unit_price_yuan, 50.00);
 
     // 2019 期 → 无
     let r3 = store
@@ -456,11 +456,11 @@ async fn test_insert_rate_closes_overlapping_open_prev() {
             customer_id: cid,
             effective_from: "2026-01-01",
             effective_to: None,
-            mbps_unit_price_cents: 1000,
-            ip_unit_price_cents: 0,
+            mbps_unit_price_yuan: 10.0,
+            ip_unit_price_yuan: 0.0,
             ip_quantity: 0,
-            machine_rent_cents: 0,
-            machine_hosting_cents: 0,
+            machine_rent_yuan: 0.0,
+            machine_hosting_yuan: 0.0,
             currency: "CNY",
             librenms_bill_id: None,
             business_label: None,
@@ -475,11 +475,11 @@ async fn test_insert_rate_closes_overlapping_open_prev() {
             customer_id: cid,
             effective_from: "2026-08-15",
             effective_to: None,
-            mbps_unit_price_cents: 2000,
-            ip_unit_price_cents: 0,
+            mbps_unit_price_yuan: 20.0,
+            ip_unit_price_yuan: 0.0,
             ip_quantity: 0,
-            machine_rent_cents: 0,
-            machine_hosting_cents: 0,
+            machine_rent_yuan: 0.0,
+            machine_hosting_yuan: 0.0,
             currency: "CNY",
             librenms_bill_id: None,
             business_label: None,
@@ -505,13 +505,13 @@ async fn test_insert_rate_closes_overlapping_open_prev() {
         .await
         .unwrap()
         .unwrap();
-    assert_eq!(r_aug.mbps_unit_price_cents, 2000);
+    assert_eq!(r_aug.mbps_unit_price_yuan, 20.0);
     let r_jul = store
         .find_rate_for_customer_at(cid, "2026-07-01")
         .await
         .unwrap()
         .unwrap();
-    assert_eq!(r_jul.mbps_unit_price_cents, 1000);
+    assert_eq!(r_jul.mbps_unit_price_yuan, 10.0);
 }
 
 #[tokio::test]
@@ -544,11 +544,11 @@ async fn test_insert_rate_skips_when_prev_already_closed() {
             customer_id: cid,
             effective_from: "2026-01-01",
             effective_to: Some("2026-06-30"),
-            mbps_unit_price_cents: 1000,
-            ip_unit_price_cents: 0,
+            mbps_unit_price_yuan: 10.0,
+            ip_unit_price_yuan: 0.0,
             ip_quantity: 0,
-            machine_rent_cents: 0,
-            machine_hosting_cents: 0,
+            machine_rent_yuan: 0.0,
+            machine_hosting_yuan: 0.0,
             currency: "CNY",
             librenms_bill_id: None,
             business_label: None,
@@ -563,11 +563,11 @@ async fn test_insert_rate_skips_when_prev_already_closed() {
             customer_id: cid,
             effective_from: "2026-07-01",
             effective_to: None,
-            mbps_unit_price_cents: 2000,
-            ip_unit_price_cents: 0,
+            mbps_unit_price_yuan: 20.0,
+            ip_unit_price_yuan: 0.0,
             ip_quantity: 0,
-            machine_rent_cents: 0,
-            machine_hosting_cents: 0,
+            machine_rent_yuan: 0.0,
+            machine_hosting_yuan: 0.0,
             currency: "CNY",
             librenms_bill_id: None,
             business_label: None,

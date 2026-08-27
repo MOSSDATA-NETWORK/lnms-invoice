@@ -45,10 +45,10 @@
       "customer_internal_key": "A",
       "effective_from": "2026-01-01",
       "effective_to": null,
-      "mbps_unit_price_cents": 10,
-      "ip_unit_price_cents": 5,
-      "machine_rent_cents": 50000,
-      "machine_hosting_cents": 30000,
+      "mbps_unit_price_yuan": 0.10,
+      "ip_unit_price_yuan": 0.05,
+      "machine_rent_yuan": 500.00,
+      "machine_hosting_yuan": 300.00,
       "currency": "CNY"
     }
   ]
