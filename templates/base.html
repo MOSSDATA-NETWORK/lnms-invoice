@@ -349,12 +349,17 @@
       letter-spacing: 0.02em;
       background: rgba(0, 0, 0, 0.02);
       border-bottom: 1px solid var(--separator);
+      border-right: 1px solid var(--separator);
       white-space: nowrap;
     }
+    .data-table thead th:last-child { border-right: none; }
     .data-table tbody td {
       padding: 14px 20px;
       font-size: 14px;
       border-bottom: 1px solid var(--separator);
+      border-right: 1px solid var(--separator);
+    }
+    .data-table tbody td:last-child { border-right: none; }
       color: var(--text);
     }
     .data-table tbody tr:last-child td { border-bottom: none; }
