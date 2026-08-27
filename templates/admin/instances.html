@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}LibreNMS 实例 · lnms-invoice{% endblock %}
+{% block sidebar %}
+<aside class="sidebar">
+  <div class="sidebar-brand"><span class="dot"></span>lnms-invoice</div>
+  <div class="sidebar-section">管理</div>
+  <nav>
+    <a href="/admin">概况</a>
+    <a href="/admin/instances" class="active">LibreNMS 实例</a>
+    <a href="/admin/customers">客户</a>
+    <a href="/admin/rates">费用</a>
+    <a href="/admin/templates">模板</a>
+    <a href="/admin/settings">设置</a>
+  </nav>
+  <div class="sidebar-section">账号</div>
+  <nav>
+    <a href="/">返回客户视图</a>
+    <form method="post" action="/logout" style="margin: 4px 0 0">
+      <button type="submit" class="btn btn-sm" style="width: 100%">退出登录</button>
+    </form>
+  </nav>
+</aside>
+{% endblock %}
+{% block body %}
+<div class="topbar">
+  <div>
+    <h1>LibreNMS 实例</h1>
+    <p class="subtitle">所有 NMS 后端及其 token 状态</p>
+  </div>
+  <div class="user">
+    <span class="avatar">{{ username.chars().next().unwrap_or('?') }}</span>
+    <span>{{ username }}</span>
+  </div>
+</div>
+
+<div class="page page-wide">
+  {% if let Some(err) = error %}
+    <div class="error">{{ err }}</div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-header"><h3>新增实例</h3></div>
+    <form method="post" action="/admin/instances/new" autocomplete="off">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px">
+        <div class="form-row">
+          <label for="new_name">名称(唯一标识)</label>
+          <input id="new_name" type="text" name="name" placeholder="prod-nms" required autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <label for="new_url">URL</label>
+          <input id="new_url" type="url" name="url" placeholder="https://nms.example.com" required autocomplete="off" />
+        </div>
+      </div>
+      <div class="form-row">
+        <label for="new_token">API Token(可选)</label>
+        <input id="new_token" type="password" name="token" placeholder="留空 = 创建后再注入" autocomplete="new-password" />
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">新增实例</button>
+        <span style="margin-left: 12px; color: var(--text-tertiary); font-size: 13px">
+          token 会以原始字节存入 <code>api_token_enc</code> 列 —— 部署必须 HTTPS,DB 备份视为敏感文件
+        </span>
+      </div>
+    </form>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h3>已有实例</h3>
+      <span class="count">{{ instances.len() }}</span>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width: 60px">ID</th>
+          <th>名称</th>
+          <th>URL</th>
+          <th>状态</th>
+          <th>API Token</th>
+          <th style="width: 380px; white-space: nowrap"></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for i in instances %}
+        <tr>
+          <td class="muted">#{{ i.id }}</td>
+          <td><span class="port">{{ i.name }}</span></td>
+          <td class="muted">{{ i.url }}</td>
+          <td>{% if i.is_active %}<span class="badge badge-active">激活</span>{% else %}<span class="badge badge-inactive">停用</span>{% endif %}</td>
+          <td>{% if i.token_set %}<span class="badge badge-set">已设置</span>{% else %}<span class="badge badge-unset">未设置</span>{% endif %}</td>
+          <td>
+            <div class="row-actions">
+              <a class="btn btn-sm" href="/admin/instances/{{ i.id }}/bills" style="margin-right: 6px">查看 bills</a>
+              <button class="btn btn-sm" type="button" onclick="document.getElementById('dlg-{{ i.id }}').showModal()" style="margin-right: 6px">编辑</button>
+              <form method="post" action="/admin/instances/{{ i.id }}/toggle-active" style="display:inline; margin-right: 6px">
+                <button class="btn btn-sm" type="submit">{% if i.is_active %}停用{% else %}启用{% endif %}</button>
+              </form>
+              <form method="post" action="/admin/instances/{{ i.id }}/delete" style="display:inline" onsubmit="return confirm('确认删除该实例?只有没客户引用时才能删。');">
+                <button class="btn btn-sm btn-danger" type="submit">删除</button>
+              </form>
+            </div>
+            <dialog id="dlg-{{ i.id }}" class="modal-dialog">
+              <div class="modal-head">
+                <h3>编辑实例</h3>
+                <button class="modal-x" onclick="this.closest('dialog').close()">×</button>
+              </div>
+              <form method="post" action="/admin/instances/{{ i.id }}/edit" autocomplete="off">
+                <div class="modal-body">
+                  <div class="form-row">
+                    <label for="edit_name_{{ i.id }}">名称</label>
+                    <input id="edit_name_{{ i.id }}" type="text" name="name" value="{{ i.name }}" required autocomplete="off" />
+                  </div>
+                  <div class="form-row">
+                    <label for="edit_url_{{ i.id }}">URL</label>
+                    <input id="edit_url_{{ i.id }}" type="url" name="url" value="{{ i.url }}" required autocomplete="off" />
+                  </div>
+                  <div class="form-row">
+                    <label for="edit_token_{{ i.id }}">API Token(留空保留当前值)</label>
+                    <input id="edit_token_{{ i.id }}" type="password" name="token" placeholder="留空 = 不修改" autocomplete="new-password" />
+                  </div>
+                  <label class="modal-check">
+                    <input type="checkbox" name="is_active" {% if i.is_active %}checked{% endif %} />
+                    激活
+                  </label>
+                </div>
+                <div class="modal-foot">
+                  <button type="button" class="btn" onclick="this.closest('dialog').close()">取消</button>
+                  <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+              </form>
+            </dialog>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6">
+          <div class="empty">
+            <div class="icon">∅</div>
+            <div>还没有 LibreNMS 实例</div>
+            <div style="margin-top: 6px; font-size: 13px">用上方表单新增,或先用 <code>import-assets.sh</code> 导入</div>
+          </div>
+        </td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <h2 style="margin-top: 32px">关于 token 注入</h2>
+  <div class="card">
+    <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 12px">
+      token 已可通过 Web 直接填写(<code>type="password"</code> 防止旁观者窥屏,autocomplete 已关闭)。
+      也可保留服务器端注入路径,以便在没有 Web UI 的环境上操作:
+    </p>
+    <pre style="background: rgba(0,0,0,0.04); padding: 12px 16px; border-radius: 8px; font-size: 13px; overflow-x: auto"><code>echo -n '&lt;token&gt;' | sudo /usr/local/bin/set-instance-token &lt;db-path&gt; &lt;instance-name&gt;</code></pre>
+    <p style="color: var(--text-tertiary); font-size: 13px; margin-top: 12px">
+      <strong>注意</strong>:Web 提交后 token 会以原始字节进入 <code>api_token_enc</code> 列(未做对称加密)。
+      部署必须强制 HTTPS,DB 文件及其备份视为敏感凭据,不要推到不信任的位置。
+    </p>
+  </div>
+</div>
+{% endblock %}

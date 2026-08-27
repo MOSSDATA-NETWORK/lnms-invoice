@@ -1,0 +1,55 @@
+{
+  "librenms_instances": [
+    {
+      "name": "hn-nms",
+      "url": "https://nms.example/",
+      "api_token_env": "LNMS_TOKEN_HN"
+    }
+  ],
+  "customers": [
+    {
+      "internal_key": "A",
+      "name": "湖南XX网络",
+      "currency": "CNY",
+      "librenms_instance": "hn-nms",
+      "librenms_bill_id": 1,
+      "timezone": "Asia/Shanghai",
+      "company_type": "domestic",
+      "company_info": {
+        "tax_id": "91430100MA00000000",
+        "bank": "招商银行长沙分行",
+        "bank_account": "1234 5678 9012 3456"
+      },
+      "billing_address": "湖南省长沙市岳麓区XX路 1 号",
+      "contact_email": "billing@a.example.com",
+      "ports": [
+        {
+          "label": "华为BGP 3段",
+          "ip_count_a": 8,
+          "ip_count_b": 0,
+          "machine_rent": false,
+          "machine_hosting": true
+        },
+        {
+          "label": "联通BGP 1段",
+          "ip_count_a": 0,
+          "ip_count_b": 4,
+          "machine_rent": true,
+          "machine_hosting": false
+        }
+      ]
+    }
+  ],
+  "rates": [
+    {
+      "customer_internal_key": "A",
+      "effective_from": "2026-01-01",
+      "effective_to": null,
+      "mbps_unit_price_cents": 10,
+      "ip_unit_price_cents": 5,
+      "machine_rent_cents": 50000,
+      "machine_hosting_cents": 30000,
+      "currency": "CNY"
+    }
+  ]
+}

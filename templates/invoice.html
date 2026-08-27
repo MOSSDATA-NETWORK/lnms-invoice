@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}发票 {{ invoice.invoice_no }} · lnms-invoice{% endblock %}
+{% block body %}
+<div class="topbar">
+  <div>
+    <h1>发票 {{ invoice.invoice_no }}</h1>
+    <p class="subtitle">
+      <span class="port">{{ period_label }}</span>
+      · {{ customer_name }}
+    </p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="/customers/{{ invoice.customer_id }}">返回</a>
+    {% if invoice.pdf_path_preview.is_some() %}
+      <a class="btn" href="/invoices/{{ invoice.id }}/preview.pdf" target="_blank">预览 PDF</a>
+    {% endif %}
+    {% if invoice.pdf_path_final.is_some() %}
+      <a class="btn btn-primary" href="/invoices/{{ invoice.id }}/final.pdf" target="_blank">最终 PDF</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="container-narrow">
+  <div class="card">
+    <div class="card-header"><h3>基本信息</h3></div>
+    <dl class="kv">
+      <dt>状态</dt>
+      <dd>
+        {% match invoice.status.as_str() %}
+          {% when "preview" %}<span class="badge badge-preview">预览</span>
+          {% when "final" %}<span class="badge badge-final">已生效</span>
+          {% when "rejected" %}<span class="badge badge-rejected">已拒绝</span>
+          {% when "failed" %}<span class="badge badge-failed">失败</span>
+          {% when "generating" %}<span class="badge badge-generating">生成中</span>
+          {% else %}<span class="badge">{{ invoice.status }}</span>
+        {% endmatch %}
+      </dd>
+      <dt>合计</dt>
+      <dd>
+        {% if invoice.total_cents.is_some() %}
+          <span class="money" style="font-size: 22px"><span class="sym">{{ invoice.currency }}</span> {{ total_yuan }}.<span class="frac">{{ total_frac }}</span></span>
+        {% else %}—{% endif %}
+      </dd>
+      <dt>模板版本</dt>
+      <dd><span class="port">{{ invoice.template_version }}</span></dd>
+      <dt>创建时间</dt>
+      <dd class="muted">{{ invoice.created_at }}</dd>
+      {% if let Some(t) = invoice.confirmed_at %}
+        <dt>确认时间</dt>
+        <dd class="muted">{{ t }}</dd>
+      {% endif %}
+      {% if let Some(r) = invoice.rejected_reason %}
+        <dt>拒绝原因</dt>
+        <dd><span class="badge badge-rejected">{{ r }}</span></dd>
+      {% endif %}
+    </dl>
+  </div>
+</div>
+{% endblock %}

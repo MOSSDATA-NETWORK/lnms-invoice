@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}客户列表 · lnms-invoice{% endblock %}
+{% block body %}
+<div class="topbar">
+  <div>
+    <h1>客户列表</h1>
+    <p class="subtitle">共 {{ customers.len() }} 个客户</p>
+  </div>
+  <div class="user">
+    {% if role == "admin" %}<a class="btn" href="/admin">管理后台</a>{% endif %}
+    <span class="avatar">{{ username.chars().next().unwrap_or('?') }}</span>
+    <span>{{ username }}</span>
+    <form method="post" action="/logout" style="display:inline">
+      <button class="btn btn-sm" type="submit">退出</button>
+    </form>
+  </div>
+</div>
+
+<div class="container">
+  <div class="panel">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>客户</th>
+          <th>内部标识</th>
+          <th>币种</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for c in customers %}
+        <tr>
+          <td>
+            <div style="font-weight: 600">{{ c.name }}</div>
+            <div style="font-size: 12px; color: var(--text-tertiary)">#{{ c.id }}</div>
+          </td>
+          <td><span class="port">{{ c.internal_key }}</span></td>
+          <td class="muted">{{ c.currency }}</td>
+          <td style="text-align: right">
+            <a class="btn btn-sm btn-primary" href="/customers/{{ c.id }}">查看发票</a>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="4">
+          <div class="empty">
+            <div class="icon">∅</div>
+            <div>还没有客户</div>
+            <div style="margin-top: 6px; font-size: 13px">请用 import-assets.sh 导入 customers.json</div>
+          </div>
+        </td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

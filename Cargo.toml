@@ -1,0 +1,107 @@
+[package]
+name = "lnms-invoice"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+description = "LibreNMS 95th percentile 带宽账单生成系统"
+license = "MIT"
+publish = false
+
+[lib]
+name = "lnms_invoice"
+path = "src/lib.rs"
+
+[[bin]]
+name = "lnms-invoice"
+path = "src/main.rs"
+
+[[bin]]
+name = "dev-smoke"
+path = "bin/dev_smoke.rs"
+
+[[bin]]
+name = "run-billing"
+path = "bin/run_billing.rs"
+
+[[bin]]
+name = "template-audit"
+path = "bin/template_audit.rs"
+
+[[bin]]
+name = "import-customers"
+path = "bin/import_customers.rs"
+
+[[bin]]
+name = "set-instance-token"
+path = "bin/set_instance_token.rs"
+
+[[bin]]
+name = "dev-bootstrap"
+path = "bin/dev_bootstrap.rs"
+
+# 阶段 1 骨架最小依赖(后续阶段加 axum / plotters / askama / tower-sessions / argon2 / sodiumoxide 等)
+[dependencies]
+# 序列化/配置
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+dotenvy = "0.15"
+
+# 错误
+thiserror = "1"
+anyhow = "1"
+
+# 时间
+chrono = { version = "0.4", default-features = false, features = ["serde", "clock"] }
+
+# 金额
+rust_decimal = { version = "1", features = ["serde"] }
+
+# Excel(锁版:3.1.0)
+umya-spreadsheet = "=3.1.0"
+
+# 模板预检阶段 3:zip(读 xlsx 内部 media / drawing XML)+ sha2 + image(算尺寸)
+zip = { version = "0.6", default-features = false, features = ["deflate"] }
+sha2 = "0.10"
+image = { version = "0.25", default-features = false, features = ["png"] }
+quick-xml = { version = "0.31", features = ["encoding"] }
+
+# 阶段 4.5:图表渲染(纯英文标签,不依赖系统字体)
+plotters = { version = "0.3", default-features = false, features = ["bitmap_backend", "ttf", "line_series", "point_series"] }
+plotters-bitmap = "0.3"
+
+# HTTP(LibreNMS 客户端阶段 4 用)
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "rustls-tls"] }
+
+# 数据库(阶段 2 用,运行时查询不编译期检查)
+sqlx = { version = "0.7", default-features = false, features = ["runtime-tokio-rustls", "sqlite", "chrono", "rust_decimal", "json"] }
+
+# 异步运行时(阶段 2 起需要)
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "fs", "sync", "net"] }
+
+# 日志
+log = "0.4"
+env_logger = "0.11"
+
+# Web 层(阶段 6)
+axum = { version = "0.7", features = ["macros", "multipart"] }
+tower = "0.5"
+tower-http = { version = "0.5", features = ["trace", "fs"] }
+async-trait = "0.1"
+argon2 = "0.5"
+hmac = "0.12"
+subtle = "2.6"
+rand = "0.8"
+base64 = "0.22"
+askama = "0.12"
+
+[dev-dependencies]
+tempfile = "3"
+httpmock = "0.7"
+tower = { version = "0.5", features = ["util"] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = "symbols"

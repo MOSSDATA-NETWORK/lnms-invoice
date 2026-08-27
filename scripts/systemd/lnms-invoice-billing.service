@@ -1,0 +1,31 @@
+[Unit]
+Description=lnms-invoice monthly billing run
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=lnms-invoice
+Group=lnms-invoice
+WorkingDirectory=/var/lib/lnms-invoice
+Environment=ENVIRONMENT=release
+
+# 防并发(同一时刻只允许一个 run-billing)
+ExecStartPre=/usr/bin/flock -n /var/lock/lnms-invoice.billing /bin/true
+
+Environment=LNMS_INVOICE_DB=/var/lib/lnms-invoice/db/lnms-invoice.sqlite
+Environment=LNMS_INVOICE_OUTPUT=/var/lib/lnms-invoice/output
+Environment=LNMS_INVOICE_CONFIG=/etc/lnms-invoice/lnms-invoice.toml
+
+ExecStart=/usr/local/bin/lnms-invoice run-billing
+TimeoutStartSec=30min
+
+# 硬化
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/lnms-invoice
+
+[Install]
+WantedBy=multi-user.target

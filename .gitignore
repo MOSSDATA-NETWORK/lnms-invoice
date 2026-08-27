@@ -1,0 +1,29 @@
+# 编译产物
+/target/
+**/*.rs.bk
+
+# 环境与凭据(强制)
+.env
+.env.local
+*.local.toml
+config/local.toml
+
+# 数据库
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+# 输出(运行时生成)
+/var/
+/output/
+
+# 临时
+*.tmp
+*.swp
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.iml

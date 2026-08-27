@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}错误 · lnms-invoice{% endblock %}
+{% block body %}
+<div class="topbar">
+  <div>
+    <h1>错误</h1>
+    <p class="subtitle">系统无法完成该请求</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="/">返回首页</a>
+  </div>
+</div>
+
+<div class="container-narrow">
+  <div class="card">
+    <div class="error">{{ message }}</div>
+    <p style="margin-top: 12px; color: var(--text-secondary); font-size: 14px">
+      若问题持续,请查看 systemd 日志:<br />
+      <code>journalctl -u lnms-invoice-web -n 100</code>
+    </p>
+  </div>
+</div>
+{% endblock %}

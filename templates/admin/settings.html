@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}后台设置 · lnms-invoice{% endblock %}
+{% block sidebar %}
+<aside class="sidebar">
+  <div class="sidebar-brand"><span class="dot"></span>lnms-invoice</div>
+  <div class="sidebar-section">管理</div>
+  <nav>
+    <a href="/admin">概况</a>
+    <a href="/admin/instances">LibreNMS 实例</a>
+    <a href="/admin/customers">客户</a>
+    <a href="/admin/rates">费用</a>
+    <a href="/admin/templates">模板</a>
+    <a href="/admin/settings" class="active">设置</a>
+  </nav>
+  <div class="sidebar-section">账号</div>
+  <nav>
+    <a href="/">返回客户视图</a>
+    <form method="post" action="/logout" style="margin: 4px 0 0">
+      <button type="submit" class="btn btn-sm" style="width: 100%">退出登录</button>
+    </form>
+  </nav>
+</aside>
+{% endblock %}
+{% block body %}
+<div class="topbar">
+  <div>
+    <h1>后台设置</h1>
+    <p class="subtitle">定时出账时机与发票号模板;变更后立即对 <code>run-billing</code> 生效</p>
+  </div>
+  <div class="user">
+    <span class="avatar">{{ username.chars().next().unwrap_or('?') }}</span>
+    <span>{{ username }}</span>
+  </div>
+</div>
+
+<div class="page page-wide">
+  {% if let Some(err) = error %}
+    <div class="error">{{ err }}</div>
+  {% endif %}
+  {% if saved %}
+    <div class="card" style="border-left: 3px solid var(--system-green, #34c759); margin-bottom: 16px">
+      <div style="padding: 12px 16px; color: var(--text-secondary)">已保存。下次 <code>run-billing</code> 拉起时生效。</div>
+    </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-header"><h3>出账定时</h3></div>
+    <form method="post" action="/admin/settings">
+      <p style="margin-top: 0; color: var(--text-tertiary); font-size: 13px">
+        <code>systemd timer</code> 每小时拉起一次 <code>run-billing</code>;<code>run-billing</code> 读下面的设置判断是否到出账时间。
+        到期后每个整点都会再进来自检一次,已出账客户由幂等检查跳过,不会重复出账。
+      </p>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px">
+        <div class="form-row">
+          <label for="billing_day">出账日(每月几号)</label>
+          <input type="number" id="billing_day" name="billing_day"
+                 min="1" max="28" value="{{ billing_day }}" required />
+          <div class="hint">1–28(避免 2 月 / 30 天月份日期溢出)</div>
+        </div>
+        <div class="form-row">
+          <label for="billing_hour">出账时刻(几点, 24h)</label>
+          <input type="number" id="billing_hour" name="billing_hour"
+                 min="0" max="23" value="{{ billing_hour }}" required />
+          <div class="hint">0–23(server 本地时区,默认 Asia/Shanghai)</div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">保存定时设置</button>
+        <span style="margin-left: 12px; color: var(--text-tertiary); font-size: 13px">
+          也可以 CLI 手动 <code>run-billing --force</code> 立即跑(忽略自检)
+        </span>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>发票号模板</h3></div>
+    <form method="post" action="/admin/settings">
+      <p style="margin-top: 0; color: var(--text-tertiary); font-size: 13px">
+        占位符:<code>{KEY}</code> 客户标识 / <code>{YYYY}</code> 年 / <code>{MM}</code> 月 / <code>{SEQ}</code> 4 位流水号(<code>sequence</code> 表);
+        <code>{SEQ}</code> 不足 4 位自动补 0。
+      </p>
+      <div class="form-row">
+        <label for="invoice_no_template">发票号模板</label>
+        <input type="text" id="invoice_no_template" name="invoice_no_template"
+               value="{{ invoice_no_template }}" required />
+        <div class="hint">
+          必须包含全部 4 个占位符;缺省 = <code>{{ default_invoice_no_template }}</code>(向  兼容旧硬编码格式)
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">保存发票号模板</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

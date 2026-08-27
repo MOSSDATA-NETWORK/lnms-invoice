@@ -1,0 +1,14 @@
+[Unit]
+Description=lnms-invoice hourly self-check billing timer
+Requires=lnms-invoice-billing.service
+
+[Timer]
+# 每小时整点拉起 run-billing;run-billing 内部读 settings 表判断「出账日/时」是否到期。
+# 到期才真正出账;未到期直接退出(零开销)。已出账客户由 invoices 表幂等,不会重复跑号。
+OnCalendar=hourly
+Persistent=true
+AccuracySec=5min
+Unit=lnms-invoice-billing.service
+
+[Install]
+WantedBy=timers.target

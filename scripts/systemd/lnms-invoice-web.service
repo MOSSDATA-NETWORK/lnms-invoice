@@ -1,0 +1,52 @@
+[Unit]
+Description=lnms-invoice web UI (axum)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=lnms-invoice
+Group=lnms-invoice
+WorkingDirectory=/var/lib/lnms-invoice
+
+# session_secret 走 systemd LoadCredentialEncrypted;解密后的明文在运行期
+# 通过 /run/lnms-invoice/session_secret_env 注入(由 ExecStartPre 写)
+LoadCredentialEncrypted=lnms_session_secret:/etc/lnms-invoice/session.secret
+
+# 把解密的 secret 写到一个 env 文件让 systemd 注入到进程
+ExecStartPre=/bin/sh -c '\
+  mkdir -p /run/lnms-invoice && \
+  chown lnms-invoice:lnms-invoice /run/lnms-invoice && \
+  systemd-creds decrypt --name=lnms_session_secret \
+      "$CREDENTIALS_DIRECTORY/lnms_session_secret" \
+      > /run/lnms-invoice/session_secret.bin && \
+  printf "LNMS_INVOICE_SESSION_SECRET=%s\n" "$(cat /run/lnms-invoice/session_secret.bin)" \
+      > /run/lnms-invoice/session.env && \
+  chmod 0600 /run/lnms-invoice/session.env /run/lnms-invoice/session_secret.bin'
+
+Environment=LNMS_INVOICE_DB=/var/lib/lnms-invoice/db/lnms-invoice.sqlite
+Environment=LNMS_INVOICE_OUTPUT=/var/lib/lnms-invoice/output
+Environment=LNMS_INVOICE_CONFIG=/etc/lnms-invoice/lnms-invoice.toml
+EnvironmentFile=/run/lnms-invoice/session.env
+
+ExecStart=/usr/local/bin/lnms-invoice serve
+
+Restart=on-failure
+RestartSec=5
+
+# 硬化
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictRealtime=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+ReadWritePaths=/var/lib/lnms-invoice /run/lnms-invoice
+
+[Install]
+WantedBy=multi-user.target

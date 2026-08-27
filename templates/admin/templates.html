@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}账单模板 · lnms-invoice{% endblock %}
+{% block sidebar %}
+<aside class="sidebar">
+  <div class="sidebar-brand"><span class="dot"></span>lnms-invoice</div>
+  <div class="sidebar-section">管理</div>
+  <nav>
+    <a href="/admin">概况</a>
+    <a href="/admin/instances">LibreNMS 实例</a>
+    <a href="/admin/customers">客户</a>
+    <a href="/admin/rates">费用</a>
+    <a href="/admin/templates" class="active">模板</a>
+    <a href="/admin/settings">设置</a>
+  </nav>
+  <div class="sidebar-section">账号</div>
+  <nav>
+    <a href="/">返回客户视图</a>
+    <form method="post" action="/logout" style="margin: 4px 0 0">
+      <button type="submit" class="btn btn-sm" style="width: 100%">退出登录</button>
+    </form>
+  </nav>
+</aside>
+{% endblock %}
+{% block body %}
+<div class="topbar">
+  <div>
+    <h1>账单模板</h1>
+    <p class="subtitle">上传 xlsx 自动跑 inspect(预检)并落 <code>template_versions</code> 表</p>
+  </div>
+  <div class="user">
+    <span class="avatar">{{ username.chars().next().unwrap_or('?') }}</span>
+    <span>{{ username }}</span>
+  </div>
+</div>
+
+<div class="page page-wide">
+  {% if let Some(err) = error %}
+    <div class="error">{{ err }}</div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-header"><h3>上传新模板</h3></div>
+    <form method="post" action="/admin/templates/upload" enctype="multipart/form-data">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px">
+        <div class="form-row">
+          <label>模板名(作为文件名和 template_versions 主键)</label>
+          <input type="text" name="template_name" placeholder="prod-billing-v2" required />
+        </div>
+        <div class="form-row">
+          <label>xlsx 文件</label>
+          <input type="file" name="file" accept=".xlsx" required />
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">上传并预检</button>
+        <span style="margin-left: 12px; color: var(--text-tertiary); font-size: 13px">
+          同名模板会被覆盖(指纹会更新到最新 sha256)
+        </span>
+      </div>
+    </form>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h3>已审计版本</h3>
+      <span class="count">{{ versions.len() }}</span>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>名称</th>
+          <th>SHA256</th>
+          <th>最后预检时间</th>
+          <th style="width: 100px">引用客户数</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for v in versions %}
+        <tr>
+          <td><span class="port">{{ v.template_name }}</span></td>
+          <td class="muted"><code>{{ v.template_sha256[..16] }}...</code></td>
+          <td class="muted">{{ v.last_validated_at }}</td>
+          <td>{{ customer_counts.get(v.template_name.as_str()).copied().unwrap_or(0) }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="4">
+          <div class="empty">
+            <div class="icon">∅</div>
+            <div>还没上传过模板</div>
+            <div style="margin-top: 6px; font-size: 13px">用上方表单上传第一个 xlsx</div>
+          </div>
+        </td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

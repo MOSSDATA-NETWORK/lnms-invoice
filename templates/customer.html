@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ customer_name }} · 发票{% endblock %}
+{% block body %}
+<div class="topbar">
+  <div>
+    <h1>{{ customer_name }}</h1>
+    <p class="subtitle">客户 #{{ customer_id }} · {{ invoice_count }} 张发票</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="/">返回</a>
+  </div>
+</div>
+
+<div class="container">
+  <div class="panel">
+    <div class="panel-header">
+      <h3>发票</h3>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>账期</th>
+          <th>发票号</th>
+          <th>状态</th>
+          <th class="num">合计</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for inv in invoices %}
+        <tr>
+          <td><span class="port">{{ inv.period }}</span></td>
+          <td class="muted">{{ inv.invoice_no }}</td>
+          <td>
+            {% match inv.status.as_str() %}
+              {% when "preview" %}<span class="badge badge-preview">预览</span>
+              {% when "final" %}<span class="badge badge-final">已生效</span>
+              {% when "rejected" %}<span class="badge badge-rejected">已拒绝</span>
+              {% when "failed" %}<span class="badge badge-failed">失败</span>
+              {% when "generating" %}<span class="badge badge-generating">生成中</span>
+              {% else %}<span class="badge">{{ inv.status }}</span>
+            {% endmatch %}
+          </td>
+          <td class="num">
+            {% if let Some(c) = inv.total_cents %}
+              <span class="money"><span class="sym">{{ inv.currency }}</span> {{ c / 100 }}.<span class="frac">{{ format!("{:02}", c % 100) }}</span></span>
+            {% else %}—{% endif %}
+          </td>
+          <td style="text-align: right">
+            <a class="btn btn-sm" href="/invoices/{{ inv.id }}">详情</a>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5">
+          <div class="empty">
+            <div class="icon">∅</div>
+            <div>还没有发票</div>
+            <div style="margin-top: 6px; font-size: 13px">账期到来时会自动生成预览</div>
+          </div>
+        </td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

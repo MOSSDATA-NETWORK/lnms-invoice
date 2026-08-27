@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}登录 · lnms-invoice{% endblock %}
+{% block layout %}
+<div class="login-page">
+  <div class="login-card">
+    <div class="brand"><span class="dot"></span>lnms-invoice</div>
+    <h1>登录</h1>
+    <p class="sub">LibreNMS 95th 计费后台</p>
+
+    {% if let Some(err) = error %}
+      <div class="error">{{ err }}</div>
+    {% endif %}
+
+    <form method="post" action="/login">
+      <div class="form-row">
+        <label for="username">用户名</label>
+        <input id="username" type="text" name="username" autocomplete="username" required autofocus />
+      </div>
+      <div class="form-row">
+        <label for="password">密码</label>
+        <input id="password" type="password" name="password" autocomplete="current-password" required />
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary btn-lg" style="width: 100%">登录</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

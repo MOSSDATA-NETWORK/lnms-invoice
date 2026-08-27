@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block title %}{{ customer.name }} · lnms-invoice{% endblock %}
+{% block sidebar %}
+<aside class="sidebar">
+  <div class="sidebar-brand"><span class="dot"></span>lnms-invoice</div>
+  <div class="sidebar-section">管理</div>
+  <nav>
+    <a href="/admin">概况</a>
+    <a href="/admin/instances">LibreNMS 实例</a>
+    <a href="/admin/customers" class="active">客户</a>
+    <a href="/admin/rates">费用</a>
+    <a href="/admin/templates">模板</a>
+    <a href="/admin/settings">设置</a>
+  </nav>
+  <div class="sidebar-section">账号</div>
+  <nav>
+    <a href="/">返回客户视图</a>
+    <form method="post" action="/logout" style="margin: 4px 0 0">
+      <button type="submit" class="btn btn-sm" style="width: 100%">退出登录</button>
+    </form>
+  </nav>
+</aside>
+{% endblock %}
+{% block body %}
+<div class="topbar">
+  <div>
+    <h1>{{ customer.name }}</h1>
+    <p class="subtitle"><span class="port">{{ customer.internal_key }}</span> · #{{ customer.id }}</p>
+  </div>
+  <div class="user">
+    <span class="avatar">{{ username.chars().next().unwrap_or('?') }}</span>
+    <span>{{ username }}</span>
+  </div>
+  <div style="margin-left: auto; display: flex; gap: 8px">
+    <a href="/admin/customers/{{ customer.id }}/edit" class="btn">编辑客户</a>
+    <form method="post" action="/admin/customers/{{ customer.id }}/delete" onsubmit="return confirm('确定删除客户 {{ customer.name }}?需要先清空其端口和发票')">
+      <button type="submit" class="btn" style="color: var(--color-danger, #c00)">删除</button>
+    </form>
+  </div>
+</div>
+
+<div class="page page-wide">
+  <div class="card">
+    <div class="card-header"><h3>基本信息</h3></div>
+    <dl class="kv">
+      <dt>内部标识</dt><dd><span class="port">{{ customer.internal_key }}</span></dd>
+      <dt>币种</dt><dd>{{ customer.currency }}</dd>
+      <dt>公司类型</dt><dd>{{ customer.company_type }}</dd>
+      <dt>时区</dt><dd>{{ customer.timezone }}</dd>
+      <dt>状态</dt><dd>{% if customer.is_active %}<span class="badge badge-active">激活</span>{% else %}<span class="badge badge-inactive">停用</span>{% endif %}</dd>
+      <dt>模板</dt><dd>{{ customer.template_name_or() }}{% if customer.template_name_or() == "" %}<span class="muted">— 未指定</span>{% endif %}</dd>
+      <dt>LNMS 实例</dt><dd>#{{ customer.librenms_instance_id }}</dd>
+      <dt>默认 LNMS bill</dt><dd>{% if customer.librenms_bill_id > 0 %}#{{ customer.librenms_bill_id }}{% else %}<span class="muted">— 未指定</span>{% endif %}</dd>
+      <dt>账单地址</dt><dd>{{ customer.billing_address_or() }}{% if customer.billing_address_or() == "" %}<span class="muted">—</span>{% endif %}</dd>
+      <dt>联系邮箱</dt><dd>{{ customer.contact_email_or() }}{% if customer.contact_email_or() == "" %}<span class="muted">—</span>{% endif %}</dd>
+    </dl>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h3>端口</h3>
+      <span class="count">{{ ports.len() }}</span>
+      <button type="button" class="btn btn-sm" onclick="document.getElementById('new_port_form').style.display='block'">新增端口</button>
+    </div>
+    <div id="new_port_form" style="display:none; padding: 0 16px 12px">
+      <form method="post" action="/admin/customers/{{ customer.id }}/ports/new" class="card" style="padding: 12px">
+        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0 12px">
+          <div class="form-row">
+            <label>名称</label>
+            <input type="text" name="port_label" required />
+          </div>
+          <div class="form-row">
+            <label>LNMS bill_id(可空,未绑定时用费用/客户默认)</label>
+            <input type="number" name="librenms_bill_id" min="1" placeholder="可选" />
+          </div>
+          <p style="margin: 8px 0 0; font-size: 12px; color: var(--text-tertiary); grid-column: 1 / -1">
+            IP 数量 v0.6.3 起在「费用」页直填,本表单不再维护
+          </p>
+          <div class="form-row" style="display:flex; flex-direction:column; gap:4px">
+            <label style="display:flex; align-items:center; gap:6px"><input type="checkbox" name="machine_rent" />机柜租用</label>
+            <label style="display:flex; align-items:center; gap:6px"><input type="checkbox" name="machine_hosting" />机柜托管</label>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">保存</button>
+          <button type="button" class="btn" onclick="document.getElementById('new_port_form').style.display='none'">取消</button>
+        </div>
+      </form>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width: 80px">ID</th>
+          <th>名称</th>
+          <th>机柜租用</th>
+          <th>机柜托管</th>
+          <th>LNMS bill_id</th>
+          <th style="width: 200px"></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for p in ports %}
+        <tr>
+          <td class="muted">#{{ p.id }}</td>
+          <td><span class="port">{{ p.label }}</span></td>
+          <td>{% if p.machine_rent %}<span class="badge badge-set">是</span>{% else %}<span style="color: var(--text-tertiary)">—</span>{% endif %}</td>
+          <td>{% if p.machine_hosting %}<span class="badge badge-set">是</span>{% else %}<span style="color: var(--text-tertiary)">—</span>{% endif %}</td>
+          <td>
+            {% match p.librenms_bill_id %}
+              {% when Some with (b) %}<span class="port">#{{ b }}</span>
+              {% when None %}<span class="muted">— 继承客户默认 —</span>
+            {% endmatch %}
+          </td>
+          <td>
+            <div class="row-actions">
+              <button type="button" class="btn btn-sm" onclick="document.getElementById('edit_port_{{ p.id }}').style.display='table-row'">编辑</button>
+              <form method="post" action="/admin/customers/{{ customer.id }}/ports/{{ p.id }}/delete" style="display:inline" onsubmit="return confirm('确定删除端口 {{ p.label }}?')">
+                <button class="btn btn-sm" type="submit">删除</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        <tr id="edit_port_{{ p.id }}" style="display:none">
+          <td colspan="6">
+            <form method="post" action="/admin/customers/{{ customer.id }}/ports/{{ p.id }}/edit" class="card" style="padding: 12px; margin: 8px 0">
+              <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0 12px">
+                <div class="form-row">
+                  <label>名称</label>
+                  <input type="text" name="port_label" value="{{ p.label }}" required />
+                </div>
+                <div class="form-row">
+                  <label>LNMS bill_id</label>
+                  <input type="number" name="librenms_bill_id" min="1" value="{{ p.librenms_bill_id.unwrap_or(0) }}" placeholder="0 = 继承客户默认" />
+                </div>
+                <div class="form-row" style="display:flex; flex-direction:column; gap:4px">
+                  <label style="display:flex; align-items:center; gap:6px"><input type="checkbox" name="machine_rent" {% if p.machine_rent %}checked{% endif %} />机柜租用</label>
+                  <label style="display:flex; align-items:center; gap:6px"><input type="checkbox" name="machine_hosting" {% if p.machine_hosting %}checked{% endif %} />机柜托管</label>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">保存修改</button>
+                <button type="button" class="btn" onclick="document.getElementById('edit_port_{{ p.id }}').style.display='none'">取消</button>
+              </div>
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6"><div class="empty">还没有端口</div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h3>费用</h3>
+      <span class="count">{{ rates.len() }}</span>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width: 80px">ID</th>
+          <th>生效起</th>
+          <th>生效止</th>
+          <th>业务名称</th>
+          <th class="num">Mbps 单价</th>
+          <th class="num">IP 单价</th>
+          <th class="num">IP 数量</th>
+          <th class="num">机柜租用</th>
+          <th class="num">机柜托管</th>
+          <th>币种</th>
+          <th>LNMS bill</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for r in rates %}
+        <tr>
+          <td class="muted">#{{ r.id }}</td>
+          <td>{{ r.business_label.as_deref().unwrap_or("—") }}</td>
+          <td><span class="port">{{ r.effective_from }}</span></td>
+          <td class="muted">{{ r.effective_to.as_deref().unwrap_or("—") }}</td>
+          <td class="num">{{ r.mbps_unit_price_cents }}</td>
+          <td class="num">{{ r.ip_unit_price_cents }}</td>
+          <td class="num">{{ r.ip_quantity }}</td>
+          <td class="num">{{ r.machine_rent_cents }}</td>
+          <td class="num">{{ r.machine_hosting_cents }}</td>
+          <td class="muted">{{ r.currency }}</td>
+          <td>
+            {% match r.librenms_bill_id %}
+              {% when Some with (b) %}<span class="port">#{{ b }}</span>
+              {% when None %}<span class="muted">—</span>
+            {% endmatch %}
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="11"><div class="empty">还没有费用 · <a href="/admin/rates">新增费用</a></div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

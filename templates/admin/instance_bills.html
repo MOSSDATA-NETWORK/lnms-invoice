@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}{{ instance_name }} 上的 bills · lnms-invoice{% endblock %}
+{% block sidebar %}
+<aside class="sidebar">
+  <div class="sidebar-brand"><span class="dot"></span>lnms-invoice</div>
+  <div class="sidebar-section">管理</div>
+  <nav>
+    <a href="/admin">概况</a>
+    <a href="/admin/instances" class="active">LibreNMS 实例</a>
+    <a href="/admin/customers">客户</a>
+    <a href="/admin/rates">费用</a>
+    <a href="/admin/templates">模板</a>
+    <a href="/admin/settings">设置</a>
+  </nav>
+  <div class="sidebar-section">账号</div>
+  <nav>
+    <a href="/">返回客户视图</a>
+    <form method="post" action="/logout" style="margin: 4px 0 0">
+      <button type="submit" class="btn btn-sm" style="width: 100%">退出登录</button>
+    </form>
+  </nav>
+</aside>
+{% endblock %}
+{% block body %}
+<div class="topbar">
+  <div>
+    <h1>{{ instance_name }} · bills</h1>
+    <p class="subtitle">从 NMS API 实时拉取(可能耗时数秒,retry/backoff)</p>
+  </div>
+  <div class="user">
+    <span class="avatar">{{ username.chars().next().unwrap_or('?') }}</span>
+    <span>{{ username }}</span>
+  </div>
+</div>
+
+<div class="page page-wide">
+  {% if let Some(err) = error %}
+    <div class="error">{{ err }}</div>
+  {% endif %}
+
+  <div class="panel">
+    <div class="panel-header">
+      <h3>该实例上的 bills</h3>
+      <span class="count">{{ bills.len() }}</span>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width: 80px">ID</th>
+          <th>名称</th>
+          <th>类型</th>
+          <th>状态</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for b in bills %}
+        <tr>
+          <td class="muted">#{{ b.id }}</td>
+          <td><span class="port">{{ b.bill_name.as_deref().unwrap_or("(no name)") }}</span></td>
+          <td class="muted">{{ b.bill_type.as_deref().unwrap_or("?") }}</td>
+          <td>{% if b.active.unwrap_or(0) != 0 %}<span class="badge badge-active">活跃</span>{% else %}<span class="badge badge-inactive">停用</span>{% endif %}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="4">
+          <div class="empty">
+            <div class="icon">∅</div>
+            <div>该 NMS 上没有 bill,或拉取失败</div>
+          </div>
+        </td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <p style="margin-top: 16px"><a href="/admin/instances" class="btn btn-sm">返回实例列表</a></p>
+</div>
+{% endblock %}

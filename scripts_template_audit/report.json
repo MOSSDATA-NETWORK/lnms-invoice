@@ -1,0 +1,914 @@
+{
+  "file": "/Users/a1234/.paseo/uploads/upload_2e2e861a-91f4-4387-887c-8054fa614d62/__.xlsx",
+  "size_bytes": 17628,
+  "sheets": [
+    {
+      "name": "Sheet1",
+      "state": "visible",
+      "dimensions": "A1:R13",
+      "max_row": 13,
+      "max_col": 18,
+      "merged_cells": [
+        "A13:G13",
+        "A1:P1",
+        "A12:G12",
+        "B2:D2",
+        "H13:P13",
+        "A10:N10",
+        "H12:P12"
+      ],
+      "formulas": [
+        {
+          "cell": "O3",
+          "formula": "=(E3*F3)+G3*H3+K3*L3+N3"
+        },
+        {
+          "cell": "O4",
+          "formula": "=(E4*F4)+G4*H4+K4*L4+N4"
+        },
+        {
+          "cell": "O5",
+          "formula": "=(E5*F5+G5*H5+K5*L5+N5)"
+        },
+        {
+          "cell": "O6",
+          "formula": "=(E6*F6+G6*H6+K6*L6+N6)"
+        },
+        {
+          "cell": "O7",
+          "formula": "=((E7*F7)+G7*H7+K7*L7+N7)"
+        },
+        {
+          "cell": "O8",
+          "formula": "=(E8*F8)+J8+G8*H8+K8*L8+N8"
+        },
+        {
+          "cell": "O9",
+          "formula": "=E9*F9+G9*H9+K9*L9+N9"
+        },
+        {
+          "cell": "O10",
+          "formula": "=SUM(O3:O9)"
+        }
+      ],
+      "conditional_formatting": [],
+      "data_validations": [],
+      "print_area": "",
+      "print_titles": "",
+      "page_setup": {
+        "orientation": "landscape",
+        "paperSize": 9,
+        "fitToWidth": null,
+        "fitToHeight": null
+      },
+      "page_margins": {
+        "left": 1.45625,
+        "right": 0.750694444444444,
+        "top": 0.409027777777778,
+        "bottom": 1.0
+      },
+      "header_footer": {
+        "oddHeader": null,
+        "oddFooter": null
+      },
+      "charts_count": 0,
+      "images_count": 0,
+      "tables": [],
+      "freeze_panes": null,
+      "sheet_view_zoom": 85,
+      "row_heights_sample": {
+        "1": 53.0,
+        "2": 30.0,
+        "3": 30.0,
+        "4": 30.0,
+        "5": 30.0,
+        "6": 30.0,
+        "7": 30.0,
+        "8": 30.0,
+        "9": 30.0,
+        "10": 30.0,
+        "11": 22.0,
+        "12": 22.0,
+        "13": 112.0
+      },
+      "col_widths_sample": {
+        "A": 9.453125,
+        "B": 14.90625,
+        "C": 4.1796875,
+        "D": 15.453125,
+        "E": 12.54296875,
+        "I": 10.0,
+        "J": 12.54296875,
+        "K": 9.6328125,
+        "L": 10.0,
+        "M": 12.54296875,
+        "O": 19.81640625,
+        "P": 27.6328125,
+        "Q": 12.54296875
+      },
+      "non_empty_cells_sample": [
+        {
+          "cell": "A1",
+          "value": "业务合作对账单(2026.07）",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "A2",
+          "value": "序号",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "B2",
+          "value": "计费时间",
+          "is_formula": false,
+          "number_format": "@"
+        },
+        {
+          "cell": "E2",
+          "value": "宽带",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "F2",
+          "value": "宽带单价",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "G2",
+          "value": "A端IP",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "H2",
+          "value": "IP单价",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "I2",
+          "value": "A端托管",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "J2",
+          "value": "A端机器租用",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "K2",
+          "value": "B端IP",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "L2",
+          "value": "B端IP单价",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "M2",
+          "value": "B端机器租用",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "N2",
+          "value": "B端机器托管",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "O2",
+          "value": "合计",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "P2",
+          "value": "备注",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "A3",
+          "value": "1",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "B3",
+          "value": "46174",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "C3",
+          "value": "-",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "D3",
+          "value": "46203",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "E3",
+          "value": "读取LNMS",
+          "is_formula": false,
+          "number_format": "0.00_ "
+        },
+        {
+          "cell": "F3",
+          "value": "43.5",
+          "is_formula": false,
+          "number_format": "0.00_ "
+        },
+        {
+          "cell": "G3",
+          "value": "8",
+          "is_formula": false,
+          "number_format": "0_ "
+        },
+        {
+          "cell": "H3",
+          "value": "50",
+          "is_formula": false,
+          "number_format": "0.00_ "
+        },
+        {
+          "cell": "O3",
+          "value": "=(E3*F3)+G3*H3+K3*L3+N3",
+          "is_formula": true,
+          "number_format": "\"￥\"#,##0.00;\"￥\"\\-#,##0.00"
+        },
+        {
+          "cell": "P3",
+          "value": "华为BGP 3段",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "A4",
+          "value": "2",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "B4",
+          "value": "46174",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "C4",
+          "value": "-",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "D4",
+          "value": "46203",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "E4",
+          "value": "读取LNMS",
+          "is_formula": false,
+          "number_format": "0.00_ "
+        },
+        {
+          "cell": "F4",
+          "value": "8.5",
+          "is_formula": false,
+          "number_format": "0.00_ "
+        },
+        {
+          "cell": "G4",
+          "value": "12",
+          "is_formula": false,
+          "number_format": "0_ "
+        },
+        {
+          "cell": "H4",
+          "value": "50",
+          "is_formula": false,
+          "number_format": "0.00_ "
+        },
+        {
+          "cell": "O4",
+          "value": "=(E4*F4)+G4*H4+K4*L4+N4",
+          "is_formula": true,
+          "number_format": "\"￥\"#,##0.00;\"￥\"\\-#,##0.00"
+        },
+        {
+          "cell": "P4",
+          "value": "阿里移动",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "A5",
+          "value": "3",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "B5",
+          "value": "46174",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "C5",
+          "value": "-",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "D5",
+          "value": "46203",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "E5",
+          "value": "读取LNMS",
+          "is_formula": false,
+          "number_format": "0.00_ "
+        },
+        {
+          "cell": "F5",
+          "value": "11",
+          "is_formula": false,
+          "number_format": "0.00_ "
+        },
+        {
+          "cell": "G5",
+          "value": "8",
+          "is_formula": false,
+          "number_format": "0_ "
+        },
+        {
+          "cell": "H5",
+          "value": "50",
+          "is_formula": false,
+          "number_format": "0.00_ "
+        },
+        {
+          "cell": "O5",
+          "value": "=(E5*F5+G5*H5+K5*L5+N5)",
+          "is_formula": true,
+          "number_format": "\"￥\"#,##0.00;\"￥\"\\-#,##0.00"
+        },
+        {
+          "cell": "P5",
+          "value": "阿里联通",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "A6",
+          "value": "4",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "B6",
+          "value": "46174",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "C6",
+          "value": "-",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "D6",
+          "value": "46203",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "E6",
+          "value": "读取LNMS",
+          "is_formula": false,
+          "number_format": "0.00_ "
+        },
+        {
+          "cell": "F6",
+          "value": "11",
+          "is_formula": false,
+          "number_format": "0.00_ "
+        },
+        {
+          "cell": "G6",
+          "value": "32",
+          "is_formula": false,
+          "number_format": "0_ "
+        },
+        {
+          "cell": "H6",
+          "value": "50",
+          "is_formula": false,
+          "number_format": "0.00_ "
+        },
+        {
+          "cell": "O6",
+          "value": "=(E6*F6+G6*H6+K6*L6+N6)",
+          "is_formula": true,
+          "number_format": "\"￥\"#,##0.00;\"￥\"\\-#,##0.00"
+        },
+        {
+          "cell": "P6",
+          "value": "阿里电信",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "A7",
+          "value": "5",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "B7",
+          "value": "46174",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "C7",
+          "value": "-",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "D7",
+          "value": "46203",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "E7",
+          "value": "读取LNMS",
+          "is_formula": false,
+          "number_format": "0.00_ "
+        }
+      ],
+      "number_formats_used": [
+        "\"￥\"#,##0.00;\"￥\"\\-#,##0.00",
+        "0.00_ ",
+        "0_ ",
+        "@",
+        "General"
+      ],
+      "font_names_used": [
+        "宋体",
+        "微软雅黑"
+      ],
+      "fill_colors_used": []
+    },
+    {
+      "name": "Sheet2",
+      "state": "visible",
+      "dimensions": "A1:A1",
+      "max_row": 1,
+      "max_col": 1,
+      "merged_cells": [],
+      "formulas": [],
+      "conditional_formatting": [],
+      "data_validations": [],
+      "print_area": "",
+      "print_titles": "",
+      "page_setup": {
+        "orientation": "portrait",
+        "paperSize": 9,
+        "fitToWidth": null,
+        "fitToHeight": null
+      },
+      "page_margins": {
+        "left": 0.7,
+        "right": 0.7,
+        "top": 0.75,
+        "bottom": 0.75
+      },
+      "header_footer": {
+        "oddHeader": null,
+        "oddFooter": null
+      },
+      "charts_count": 0,
+      "images_count": 0,
+      "tables": [],
+      "freeze_panes": null,
+      "sheet_view_zoom": null,
+      "row_heights_sample": {},
+      "col_widths_sample": {},
+      "non_empty_cells_sample": [],
+      "number_formats_used": [],
+      "font_names_used": [],
+      "fill_colors_used": []
+    },
+    {
+      "name": "Sheet3",
+      "state": "visible",
+      "dimensions": "A1:A1",
+      "max_row": 1,
+      "max_col": 1,
+      "merged_cells": [],
+      "formulas": [],
+      "conditional_formatting": [],
+      "data_validations": [],
+      "print_area": "",
+      "print_titles": "",
+      "page_setup": {
+        "orientation": "portrait",
+        "paperSize": 9,
+        "fitToWidth": null,
+        "fitToHeight": null
+      },
+      "page_margins": {
+        "left": 0.7,
+        "right": 0.7,
+        "top": 0.75,
+        "bottom": 0.75
+      },
+      "header_footer": {
+        "oddHeader": null,
+        "oddFooter": null
+      },
+      "charts_count": 0,
+      "images_count": 0,
+      "tables": [],
+      "freeze_panes": null,
+      "sheet_view_zoom": null,
+      "row_heights_sample": {},
+      "col_widths_sample": {},
+      "non_empty_cells_sample": [],
+      "number_formats_used": [],
+      "font_names_used": [],
+      "fill_colors_used": []
+    }
+  ],
+  "defined_names": []
+}
+
+================================================================================
+
+{
+  "file": "/Users/a1234/.paseo/uploads/upload_64f85126-88f7-4c3f-833c-fd60b213f6bb/__2.xlsx",
+  "size_bytes": 199251,
+  "sheets": [
+    {
+      "name": "Sheet1",
+      "state": "visible",
+      "dimensions": "A1:I10",
+      "max_row": 10,
+      "max_col": 9,
+      "merged_cells": [
+        "G2:I2",
+        "B3:D3",
+        "A10:I10",
+        "F9:I9",
+        "A1:I1",
+        "A9:E9",
+        "A7:F7"
+      ],
+      "formulas": [
+        {
+          "cell": "G4",
+          "formula": "=E4*F4"
+        },
+        {
+          "cell": "G5",
+          "formula": "=E5*F5"
+        },
+        {
+          "cell": "G6",
+          "formula": "=E6*F6"
+        },
+        {
+          "cell": "G7",
+          "formula": "=SUM(G4:G6)"
+        }
+      ],
+      "conditional_formatting": [],
+      "data_validations": [],
+      "print_area": "",
+      "print_titles": "",
+      "page_setup": {
+        "orientation": "landscape",
+        "paperSize": 9,
+        "fitToWidth": 0,
+        "fitToHeight": 0
+      },
+      "page_margins": {
+        "left": 0.7,
+        "right": 0.7,
+        "top": 0.75,
+        "bottom": 0.75
+      },
+      "header_footer": {
+        "oddHeader": null,
+        "oddFooter": null
+      },
+      "charts_count": 0,
+      "images_count": 0,
+      "tables": [],
+      "freeze_panes": null,
+      "sheet_view_zoom": null,
+      "row_heights_sample": {
+        "1": 49.0,
+        "2": 32.0,
+        "3": 30.0,
+        "4": 30.0,
+        "5": 30.0,
+        "6": 30.0,
+        "7": 30.0,
+        "8": 30.0,
+        "9": 166.5,
+        "10": 30.0
+      },
+      "col_widths_sample": {
+        "A": 10.08984375,
+        "B": 14.453125,
+        "C": 6.0,
+        "D": 14.6328125,
+        "E": 13.453125,
+        "F": 10.7265625,
+        "G": 15.453125,
+        "H": 21.6328125,
+        "I": 16.1796875
+      },
+      "non_empty_cells_sample": [
+        {
+          "cell": "A1",
+          "value": "业务合作对账单(2026.07）",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "G2",
+          "value": "INVOICE NO: MS2026070101",
+          "is_formula": false,
+          "number_format": "@"
+        },
+        {
+          "cell": "A3",
+          "value": "序号",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "B3",
+          "value": "计费时间",
+          "is_formula": false,
+          "number_format": "@"
+        },
+        {
+          "cell": "E3",
+          "value": "数量",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "F3",
+          "value": "单价/HKD",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "G3",
+          "value": "合计/HKD",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "H3",
+          "value": "产品名称",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "I3",
+          "value": "备注",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "A4",
+          "value": "1",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "B4",
+          "value": "46204",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "C4",
+          "value": "-",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "D4",
+          "value": "46234",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "E4",
+          "value": "读取LNMS",
+          "is_formula": false,
+          "number_format": "0.00_ "
+        },
+        {
+          "cell": "F4",
+          "value": "4",
+          "is_formula": false,
+          "number_format": "0.00_ "
+        },
+        {
+          "cell": "G4",
+          "value": "=E4*F4",
+          "is_formula": true,
+          "number_format": "\\$#,##0.00_);\\(\\$#,##0.00\\)"
+        },
+        {
+          "cell": "H4",
+          "value": "HK STD/端口/Mpbs",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "I4",
+          "value": "1500M保底",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "A5",
+          "value": "2",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "B5",
+          "value": "46204",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "C5",
+          "value": "-",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "D5",
+          "value": "46234",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "E5",
+          "value": "读取LNMS",
+          "is_formula": false,
+          "number_format": "0.00_ "
+        },
+        {
+          "cell": "F5",
+          "value": "7",
+          "is_formula": false,
+          "number_format": "0.00_ "
+        },
+        {
+          "cell": "G5",
+          "value": "=E5*F5",
+          "is_formula": true,
+          "number_format": "\\$#,##0.00_);\\(\\$#,##0.00\\)"
+        },
+        {
+          "cell": "H5",
+          "value": "HK STD/IP",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "I5",
+          "value": "IP费用",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "A6",
+          "value": "3",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "B6",
+          "value": "46174",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "C6",
+          "value": "-",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "D6",
+          "value": "46203",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "E6",
+          "value": "读取LNMS",
+          "is_formula": false,
+          "number_format": "0.00_ "
+        },
+        {
+          "cell": "F6",
+          "value": "4",
+          "is_formula": false,
+          "number_format": "0.00_ "
+        },
+        {
+          "cell": "G6",
+          "value": "=E6*F6",
+          "is_formula": true,
+          "number_format": "\\$#,##0.00_);\\(\\$#,##0.00\\)"
+        },
+        {
+          "cell": "H6",
+          "value": "HK STD/端口/Mpbs",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "I6",
+          "value": "6月95超出部分",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "A7",
+          "value": "合计",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "G7",
+          "value": "=SUM(G4:G6)",
+          "is_formula": true,
+          "number_format": "\\$#,##0.00_);\\(\\$#,##0.00\\)"
+        },
+        {
+          "cell": "A9",
+          "value": "收款信息\nBeneficiary's Name:  \nBeneficiary's Address：\nBank Name: \nSwift Code：\nBan...",
+          "is_formula": false,
+          "number_format": "General"
+        },
+        {
+          "cell": "F9",
+          "value": "客户信息\nBeneficiary's Name:  \nBank Name:  \nBank Address:  \nBeneficiary's Account...",
+          "is_formula": false,
+          "number_format": "General"
+        }
+      ],
+      "number_formats_used": [
+        "0.00_ ",
+        "@",
+        "General",
+        "\\$#,##0.00_);\\(\\$#,##0.00\\)"
+      ],
+      "font_names_used": [
+        "宋体",
+        "微软雅黑"
+      ],
+      "fill_colors_used": []
+    }
+  ],
+  "defined_names": []
+}
+
+================================================================================
+

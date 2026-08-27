@@ -1,0 +1,30 @@
+# lnms-invoice 默认配置
+# 实际部署复制为 lnms-invoice.toml 后修改
+
+[server]
+bind = "127.0.0.1"
+port = 8080
+
+[database]
+path = "./var/db.sqlite"
+
+[libre_nms]
+timeout_seconds = 30
+retry_max = 5
+sleep_ms_between_requests = 50
+
+[billing]
+# 每月几号几时(UTC+8)跑一次月度账单,默认每月 1 日 10:00。
+# run_at_day_of_month 范围 1..=28,避免 2 月与大小月越界。
+run_at_day_of_month = 1
+run_at_hour = 10
+run_at_minute = 0
+timezone = "Asia/Shanghai"
+
+[output]
+root = "./var/output"
+soffice_user_installation = "./var/soffice-profile"
+
+# LNMS 实例(URL + token 走 store 表;这里只放默认值)
+[libre_nms.defaults]
+customer_id_header = "X-Custom-Header"

@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == "new" %}新建客户{% else %}编辑客户{% endif %} · lnms-invoice{% endblock %}
+{% block sidebar %}
+<aside class="sidebar">
+  <div class="sidebar-brand"><span class="dot"></span>lnms-invoice</div>
+  <div class="sidebar-section">管理</div>
+  <nav>
+    <a href="/admin">概况</a>
+    <a href="/admin/instances">LibreNMS 实例</a>
+    <a href="/admin/customers" class="active">客户</a>
+    <a href="/admin/rates">费用</a>
+    <a href="/admin/templates">模板</a>
+    <a href="/admin/settings">设置</a>
+  </nav>
+  <div class="sidebar-section">账号</div>
+  <nav>
+    <a href="/">返回客户视图</a>
+    <form method="post" action="/logout" style="margin: 4px 0 0">
+      <button type="submit" class="btn btn-sm" style="width: 100%">退出登录</button>
+    </form>
+  </nav>
+</aside>
+{% endblock %}
+{% block body %}
+<div class="topbar">
+  <div>
+    <h1>{% if mode == "new" %}新建客户{% else %}编辑客户{% endif %}</h1>
+    <p class="subtitle">{% if mode == "new" %}填好下面表单后,会在数据库里新增一个客户记录{% else %}编辑 {{ customer.name }} 的所有字段{% endif %}</p>
+  </div>
+  <div class="user">
+    <span class="avatar">{{ username.chars().next().unwrap_or('?') }}</span>
+    <span>{{ username }}</span>
+  </div>
+</div>
+
+<div class="page page-wide">
+  {% if let Some(err) = error %}
+    <div class="error">{{ err }}</div>
+  {% endif %}
+
+  {% if mode == "new" %}
+  <form method="post" action="/admin/customers/new">
+  {% else %}
+  <form method="post" action="/admin/customers/{{ customer.id }}/edit">
+  {% endif %}
+    <div class="card">
+      <div class="card-header"><h3>基础</h3></div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px">
+        <div class="form-row">
+          <label>内部标识 (internal_key,唯一)</label>
+          <input type="text" name="internal_key" required value="{{ customer.internal_key }}" />
+        </div>
+        <div class="form-row">
+          <label>客户名称</label>
+          <input type="text" name="name" required value="{{ customer.name }}" />
+        </div>
+        <div class="form-row">
+          <label>币种</label>
+          <select name="currency">
+            <option value="CNY" {% if customer.currency == "CNY" %}selected{% endif %}>CNY</option>
+            <option value="HKD" {% if customer.currency == "HKD" %}selected{% endif %}>HKD</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>公司类型</label>
+          <select name="company_type">
+            <option value="domestic" {% if customer.company_type == "domestic" %}selected{% endif %}>domestic(国内)</option>
+            <option value="hk" {% if customer.company_type == "hk" %}selected{% endif %}>hk(香港)</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>时区</label>
+          <input type="text" name="timezone" value="{{ customer.timezone }}" />
+        </div>
+        <div class="form-row">
+          <label>激活</label>
+          <label style="display: flex; align-items: center; gap: 8px; padding-top: 8px">
+            <input type="checkbox" name="is_active" {% if customer.is_active %}checked{% endif %} />
+            <span style="font-size: 13px; color: var(--text-secondary)">启用</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>LibreNMS 绑定</h3></div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px">
+        <div class="form-row">
+          <label>NMS 实例</label>
+          <select name="librenms_instance_id" id="inst_select">
+            {% for i in instances %}
+              <option value="{{ i.id }}" {% if customer.librenms_instance_id == i.id %}selected{% endif %}>{{ i.name }} ({{ i.url }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-row">
+          <label>默认 LNMS bill_id(可选,port 留空时回落到此)</label>
+          <input type="text" name="librenms_bill_id" id="default_bill" value="{{ customer.librenms_bill_id }}" placeholder="可空,或正整数" />
+          <span style="font-size: 12px; color: var(--text-tertiary)">
+            想从 NMS 选?改 NMS 实例后点「拉取 bills」——
+            <button type="button" id="fetch_bills_btn" class="btn btn-sm">拉取</button>
+          </span>
+        </div>
+      </div>
+      <div id="bills_dropdown_zone"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>公司信息</h3></div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px">
+        <div class="form-row">
+          <label>账单地址</label>
+          <textarea name="billing_address" rows="3">{{ customer.billing_address_or() }}</textarea>
+        </div>
+        <div class="form-row">
+          <label>联系邮箱</label>
+          <input type="email" name="contact_email" value="{{ customer.contact_email_or() }}" />
+        </div>
+      </div>
+      <div class="form-row">
+        <label>company_info_json(原始 JSON,默认 {})</label>
+        <textarea name="company_info_json" rows="3">{{ customer.company_info_json_or() }}</textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>模板</h3></div>
+      <div class="form-row">
+        <label>选择模板版本(可选)</label>
+        <select name="template_name">
+          <option value="">— 不指定 —</option>
+          {% for t in templates %}
+            <option value="{{ t.template_name }}" {% if customer.template_name_or() == t.template_name %}selected{% endif %}>{{ t.template_name }} ({{ t.template_sha256[..8] }})</option>
+          {% endfor %}
+        </select>
+        <span style="font-size: 12px; color: var(--text-tertiary)">只有 <code>/admin/templates</code> 上传并通过 inspect 的模板会列出</span>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">{% if mode == "new" %}新建客户{% else %}保存修改{% endif %}</button>
+      <a href="/admin/customers" class="btn">取消</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  // 拉取选中实例的 LNMS bills,填充到下拉区
+  document.getElementById('fetch_bills_btn').addEventListener('click', async () => {
+    const instId = document.getElementById('inst_select').value;
+    const zone = document.getElementById('bills_dropdown_zone');
+    zone.innerHTML = '<div style="color: var(--text-tertiary); padding: 8px 0">拉取中...</div>';
+    try {
+      const resp = await fetch('/admin/ajax/bills?instance_id=' + encodeURIComponent(instId));
+      if (!resp.ok) {
+        zone.innerHTML = '<div class="error">拉取失败: HTTP ' + resp.status + '</div>';
+        return;
+      }
+      const data = await resp.json();
+      const bills = data.bills || [];
+      if (!bills.length) {
+        zone.innerHTML = '<div style="color: var(--text-tertiary); padding: 8px 0">该 NMS 上没有 bill</div>';
+        return;
+      }
+      let html = '<div style="margin-top: 12px"><label style="font-size: 13px; color: var(--text-secondary)">从列表选一个:</label><select id="bill_pick">';
+      html += '<option value="">— 选 —</option>';
+      for (const b of bills) {
+        const name = b.bill_name || '(no name)';
+        html += '<option value="' + b.id + '">#' + b.id + ' - ' + name + ' [' + (b.bill_type || '?') + ']</option>';
+      }
+      html += '</select> <button type="button" id="fill_default" class="btn btn-sm">填到默认 bill_id</button></div>';
+      zone.innerHTML = html;
+      document.getElementById('fill_default').addEventListener('click', () => {
+        const v = document.getElementById('bill_pick').value;
+        if (v) document.getElementById('default_bill').value = v;
+      });
+    } catch (e) {
+      zone.innerHTML = '<div class="error">网络错误: ' + e + '</div>';
+    }
+  });
+</script>
+{% endblock %}

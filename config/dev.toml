@@ -1,0 +1,27 @@
+# 本地 dev 预览配置(cargo run -- serve 用)
+# 与 config/default.toml 唯一区别:server.port=18080,db/output 走 /tmp
+
+[server]
+bind = "127.0.0.1"
+port = 18765
+
+[database]
+path = "/tmp/lnms-invoice/dev.db"
+
+[libre_nms]
+timeout_seconds = 30
+retry_max = 5
+sleep_ms_between_requests = 50
+
+[billing]
+run_at_day_of_month = 1
+run_at_hour = 10
+run_at_minute = 0
+timezone = "Asia/Shanghai"
+
+[output]
+root = "/tmp/lnms-invoice/output"
+soffice_user_installation = "/tmp/lnms-invoice/soffice-profile"
+
+[libre_nms.defaults]
+customer_id_header = "X-Custom-Header"

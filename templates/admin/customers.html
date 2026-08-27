@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}客户管理 · lnms-invoice{% endblock %}
+{% block sidebar %}
+<aside class="sidebar">
+  <div class="sidebar-brand"><span class="dot"></span>lnms-invoice</div>
+  <div class="sidebar-section">管理</div>
+  <nav>
+    <a href="/admin">概况</a>
+    <a href="/admin/instances">LibreNMS 实例</a>
+    <a href="/admin/customers" class="active">客户</a>
+    <a href="/admin/rates">费用</a>
+    <a href="/admin/templates">模板</a>
+    <a href="/admin/settings">设置</a>
+  </nav>
+  <div class="sidebar-section">账号</div>
+  <nav>
+    <a href="/">返回客户视图</a>
+    <form method="post" action="/logout" style="margin: 4px 0 0">
+      <button type="submit" class="btn btn-sm" style="width: 100%">退出登录</button>
+    </form>
+  </nav>
+</aside>
+{% endblock %}
+{% block body %}
+<div class="topbar">
+  <div>
+    <h1>客户</h1>
+    <p class="subtitle">{{ customers.len() }} 个客户</p>
+  </div>
+  <div class="user">
+    <span class="avatar">{{ username.chars().next().unwrap_or('?') }}</span>
+    <span>{{ username }}</span>
+  </div>
+  <div style="margin-left: auto">
+    <a href="/admin/customers/new" class="btn btn-primary">新建客户</a>
+  </div>
+</div>
+
+<div class="page page-wide">
+  <div class="panel">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width: 80px">ID</th>
+          <th>客户</th>
+          <th>内部标识</th>
+          <th>币种</th>
+          <th>状态</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for c in customers %}
+        <tr>
+          <td class="muted">#{{ c.id }}</td>
+          <td>
+            <div style="font-weight: 600">{{ c.name }}</div>
+          </td>
+          <td><span class="port">{{ c.internal_key }}</span></td>
+          <td class="muted">{{ c.currency }}</td>
+          <td>{% if c.is_active %}<span class="badge badge-active">激活</span>{% else %}<span class="badge badge-inactive">停用</span>{% endif %}</td>
+          <td>
+            <div class="row-actions">
+              <a class="btn btn-sm" href="/admin/customers/{{ c.id }}">详情</a>
+              <a class="btn btn-sm" href="/admin/customers/{{ c.id }}/edit">编辑</a>
+              <form method="post" action="/admin/customers/{{ c.id }}/toggle-active" style="display:inline">
+                <button class="btn btn-sm" type="submit">{% if c.is_active %}停用{% else %}启用{% endif %}</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6">
+          <div class="empty">
+            <div class="icon">∅</div>
+            <div>还没有客户</div>
+            <div style="margin-top: 6px; font-size: 13px">点击右上角「新建客户」开始</div>
+          </div>
+        </td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <p style="margin-top: 16px; color: var(--text-tertiary); font-size: 13px">
+    停用的客户会被 <code>run-billing</code> 跳过,但其历史发票仍可访问。
+  </p>
+</div>
+{% endblock %}
