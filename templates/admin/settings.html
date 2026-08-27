@@ -77,15 +77,15 @@
     <div class="card-header"><h3>发票号模板</h3></div>
     <form method="post" action="/admin/settings">
       <p style="margin-top: 0; color: var(--text-tertiary); font-size: 13px">
-        占位符:<code>{KEY}</code> 客户标识 / <code>{YYYY}</code> 年 / <code>{MM}</code> 月 / <code>{SEQ}</code> 4 位流水号(<code>sequence</code> 表);
-        <code>{SEQ}</code> 不足 4 位自动补 0。
+        占位符:<code>{KEY}</code> 客户标识 / <code>{YYYY}</code> 4位年 / <code>{YY}</code> 2位年 / <code>{MM}</code> 2位月 /
+        <code>{SEQ}</code> 4位流水号 / <code>{SEQ:N}</code> N位流水号(如 <code>{SEQ:3}</code> → 001)
       </p>
       <div class="form-row">
         <label for="invoice_no_template">发票号模板</label>
         <input type="text" id="invoice_no_template" name="invoice_no_template"
                value="{{ invoice_no_template }}" required />
         <div class="hint">
-          必须包含全部 4 个占位符;缺省 = <code>{{ default_invoice_no_template }}</code>(向  兼容旧硬编码格式)
+          至少包含 <code>{SEQ}</code>;示例:<code>MS{YY}{MM}{SEQ:3}</code> → MS2607001
         </div>
       </div>
       <div class="form-actions">

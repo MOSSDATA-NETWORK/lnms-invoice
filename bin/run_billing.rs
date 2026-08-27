@@ -354,12 +354,44 @@ fn shanghai_day_hour() -> (u32, u32) {
     )
 }
 
-/// 渲染发票号。占位符:{KEY} {YYYY} {MM} {SEQ}(SEQ 补零到 4 位)。
+/// 渲染发票号。占位符:
+/// - {KEY} 客户标识
+/// - {YYYY} 4位年份
+/// - {YY} 2位年份(取后两位)
+/// - {MM} 2位月份
+/// - {SEQ} 序号(默认4位补零)
+/// - {SEQ:N} 序号(N位补零,如 {SEQ:3} → 001)
 fn render_invoice_no(tpl: &str, key: &str, year: i64, month: u32, seq: i64) -> String {
-    tpl.replace("{KEY}", key)
+    let year_str = year.to_string();
+    let yy = if year_str.len() >= 2 {
+        &year_str[year_str.len()-2..]
+    } else {
+        &year_str
+    };
+
+    // 注意：先处理 {YY} 再处理 {YYYY}，否则 {YYYY} 会把 {YY} 中的 Y 替换掉
+    let mut result = tpl.replace("{KEY}", key)
+        .replace("{YY}", yy)
         .replace("{YYYY}", &format!("{year:04}"))
-        .replace("{MM}", &format!("{month:02}"))
-        .replace("{SEQ}", &format!("{seq:04}"))
+        .replace("{MM}", &format!("{month:02}"));
+
+    // 处理 {SEQ:N} 格式（自定义位数）
+    while let Some(start) = result.find("{SEQ:") {
+        if let Some(end) = result[start..].find('}') {
+            let width_str = &result[start+5..start+end];
+            if let Ok(width) = width_str.parse::<usize>() {
+                let replacement = format!("{:0>width$}", seq, width = width);
+                result = format!("{}{}{}", &result[..start], replacement, &result[start+end+1..]);
+            } else {
+                break;
+            }
+        } else {
+            break;
+        }
+    }
+
+    // 处理普通的 {SEQ}（默认4位补零）
+    result.replace("{SEQ}", &format!("{seq:04}"))
 }
 
 #[cfg(test)]
@@ -379,6 +411,30 @@ mod tests {
         assert_eq!(
             render_invoice_no("{YYYY}{MM}-{KEY}-{SEQ}", "hunan", 2026, 12, 42),
             "202612-hunan-0042"
+        );
+    }
+
+    #[test]
+    fn test_render_invoice_no_two_digit_year() {
+        assert_eq!(
+            render_invoice_no("MS{YY}{MM}{SEQ}", "MS", 2026, 7, 1),
+            "MS26070001"
+        );
+    }
+
+    #[test]
+    fn test_render_invoice_no_custom_seq_width() {
+        assert_eq!(
+            render_invoice_no("MS{YY}{MM}{SEQ:3}", "MS", 2026, 7, 1),
+            "MS2607001"
+        );
+    }
+
+    #[test]
+    fn test_render_invoice_no_custom_seq_width_two() {
+        assert_eq!(
+            render_invoice_no("INV-{YY}{MM}-{SEQ:2}", "A", 2026, 12, 42),
+            "INV-2612-42"
         );
     }
 

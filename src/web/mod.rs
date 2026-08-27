@@ -1904,15 +1904,13 @@ async fn post_admin_settings(
             "发票号模板不能为空",
         );
     }
-    if !["{KEY}", "{YYYY}", "{MM}", "{SEQ}"]
-        .iter()
-        .all(|p| tpl.contains(p))
-    {
+    // 至少需要包含 {SEQ} 占位符，其他占位符可选
+    if !tpl.contains("{SEQ}") {
         let invoice_no_template = read_admin_invoice_template(store).await;
         return render_admin_settings_error(
             &user,
             &invoice_no_template,
-            "发票号模板必须包含 {KEY} {YYYY} {MM} {SEQ} 全部占位符",
+            "发票号模板必须包含 {SEQ} 占位符",
         );
     }
 
