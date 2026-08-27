@@ -68,10 +68,6 @@
             <label for="effective_from">生效起 (YYYY-MM-DD)</label>
             <input id="effective_from" type="text" name="effective_from" value="{{ new_form_effective_from }}" required />
           </div>
-          <div class="form-row" style="margin: 0">
-            <label for="effective_to">生效止 (留空=至今)</label>
-            <input id="effective_to" type="text" name="effective_to" value="{{ new_form_effective_to }}" />
-          </div>
         </div>
         <div style="flex: 1; display: flex; flex-direction: column; gap: 16px">
           <div class="form-row" style="margin: 0">
@@ -81,6 +77,10 @@
           <div class="form-row" style="margin: 0">
             <label for="mbps_unit_price_cents">单价</label>
             <input id="mbps_unit_price_cents" type="text" name="mbps_unit_price_cents" value="{{ new_form_mbps_unit_price_cents }}" required />
+          </div>
+          <div class="form-row" style="margin: 0">
+            <label for="effective_to">生效止 (留空=至今)</label>
+            <input id="effective_to" type="text" name="effective_to" value="{{ new_form_effective_to }}" />
           </div>
           <div class="form-row" style="margin: 0">
             <label for="rate_librenms_bill_id">LNMS bill_id (可选)</label>
