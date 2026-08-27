@@ -41,6 +41,10 @@
   <div class="card">
     <div class="card-header"><h3>新增费用</h3></div>
     <form method="post" action="/admin/rates/new">
+      <input type="hidden" name="ip_unit_price_cents" value="0" />
+      <input type="hidden" name="ip_quantity" value="0" />
+      <input type="hidden" name="machine_rent_cents" value="0" />
+      <input type="hidden" name="machine_hosting_cents" value="0" />
       <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 24px">
         <div class="form-row" style="margin: 0">
           <label for="customer_id">客户</label>
@@ -75,10 +79,6 @@
           <label for="effective_to">生效止 (留空=至今)</label>
           <input id="effective_to" type="text" name="effective_to" value="{{ new_form_effective_to }}" />
         </div>
-        <input type="hidden" name="ip_unit_price_cents" value="0" />
-        <input type="hidden" name="ip_quantity" value="0" />
-        <input type="hidden" name="machine_rent_cents" value="0" />
-        <input type="hidden" name="machine_hosting_cents" value="0" />
         <div class="form-row" style="margin: 0">
           <label for="rate_librenms_bill_id">LNMS bill_id (可选)</label>
           <input id="rate_librenms_bill_id" type="number" name="librenms_bill_id" min="1" placeholder="留空 = 用客户默认 bill" />
@@ -89,7 +89,7 @@
           <input id="new_form_notes" type="text" name="notes" value="{{ new_form_notes }}" placeholder="可选:自定义备注信息" maxlength="256" />
         </div>
       </div>
-      <div class="form-actions">
+      <div class="form-actions" style="justify-content: flex-end">
         <button type="submit" class="btn btn-primary">新增费用</button>
       </div>
     </form>
