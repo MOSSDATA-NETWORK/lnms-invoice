@@ -48,7 +48,16 @@
         </div>
         <div class="form-row">
           <label>xlsx 文件</label>
-          <input type="file" name="file" accept=".xlsx" required />
+          <div style="position: relative; display: inline-block">
+            <input type="file" id="template-file" name="file" accept=".xlsx" required
+                   style="position: absolute; left: 0; top: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 1" />
+            <button type="button" class="btn btn-outline"
+                    onclick="document.getElementById('template-file').click()"
+                    style="min-width: 200px; text-align: left; justify-content: flex-start">
+              <span id="file-name">选择文件...</span>
+            </button>
+          </div>
+          <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px">支持 .xlsx 格式</div>
         </div>
       </div>
       <div class="form-actions">
@@ -59,6 +68,13 @@
       </div>
     </form>
   </div>
+
+  <script>
+    document.getElementById('template-file').addEventListener('change', function(e) {
+      const fileName = e.target.files[0] ? e.target.files[0].name : '选择文件...';
+      document.getElementById('file-name').textContent = fileName;
+    });
+  </script>
 
   <div class="panel">
     <div class="panel-header">
