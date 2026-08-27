@@ -864,6 +864,7 @@ pub struct Rate {
     pub currency: String,
     pub librenms_bill_id: Option<i64>,
     pub business_label: Option<String>,
+    pub notes: String,
 }
 
 impl Store {
@@ -876,8 +877,8 @@ impl Store {
                 (customer_id, effective_from, effective_to,
                  mbps_unit_price_cents, ip_unit_price_cents, ip_quantity,
                  machine_rent_cents, machine_hosting_cents, currency, librenms_bill_id,
-                 business_label)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                 business_label, notes)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         )
         .bind(r.customer_id)
         .bind(r.effective_from)
@@ -890,6 +891,7 @@ impl Store {
         .bind(r.currency)
         .bind(r.librenms_bill_id)
         .bind(r.business_label)
+        .bind(r.notes)
         .execute(&self.pool)
         .await
         .map_err(|e| Error::Database(format!("insert rates: {e}")))?;
@@ -905,7 +907,7 @@ impl Store {
             "SELECT id, customer_id, effective_from, effective_to,
                     mbps_unit_price_cents, ip_unit_price_cents, ip_quantity,
                     machine_rent_cents, machine_hosting_cents, currency, librenms_bill_id,
-                    business_label
+                    business_label, notes
              FROM rates
              WHERE customer_id = ?
                AND effective_from <= ?
@@ -932,6 +934,7 @@ impl Store {
                 currency: r.try_get("currency").map_err(sqlx_err)?,
                 librenms_bill_id: r.try_get("librenms_bill_id").map_err(sqlx_err)?,
                 business_label: r.try_get("business_label").map_err(sqlx_err)?,
+                notes: r.try_get("notes").map_err(sqlx_err)?,
             })
         })
         .transpose()
@@ -942,7 +945,7 @@ impl Store {
             "SELECT id, customer_id, effective_from, effective_to,
                     mbps_unit_price_cents, ip_unit_price_cents, ip_quantity,
                     machine_rent_cents, machine_hosting_cents, currency, librenms_bill_id,
-                    business_label
+                    business_label, notes
              FROM rates WHERE customer_id = ? ORDER BY effective_from DESC",
         )
         .bind(customer_id)
@@ -964,6 +967,7 @@ impl Store {
                     currency: r.try_get("currency").map_err(sqlx_err)?,
                     librenms_bill_id: r.try_get("librenms_bill_id").map_err(sqlx_err)?,
                     business_label: r.try_get("business_label").map_err(sqlx_err)?,
+                    notes: r.try_get("notes").map_err(sqlx_err)?,
                 })
             })
             .collect()
@@ -974,7 +978,7 @@ impl Store {
             "SELECT id, customer_id, effective_from, effective_to,
                     mbps_unit_price_cents, ip_unit_price_cents, ip_quantity,
                     machine_rent_cents, machine_hosting_cents, currency, librenms_bill_id,
-                    business_label
+                    business_label, notes
              FROM rates ORDER BY customer_id, effective_from DESC",
         )
         .fetch_all(&self.pool)
@@ -995,6 +999,7 @@ impl Store {
                     currency: r.try_get("currency").map_err(sqlx_err)?,
                     librenms_bill_id: r.try_get("librenms_bill_id").map_err(sqlx_err)?,
                     business_label: r.try_get("business_label").map_err(sqlx_err)?,
+                    notes: r.try_get("notes").map_err(sqlx_err)?,
                 })
             })
             .collect()
@@ -1138,6 +1143,7 @@ pub struct NewRate<'a> {
     pub currency: &'a str,
     pub librenms_bill_id: Option<i64>,
     pub business_label: Option<&'a str>,
+    pub notes: &'a str,
 }
 
 // ============================================================

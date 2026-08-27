@@ -710,6 +710,7 @@ struct AdminRatesTpl<'a> {
     new_form_machine_hosting_cents: &'a str,
     new_form_currency: &'a str,
     new_form_business_label: &'a str,
+    new_form_notes: &'a str,
     error: Option<String>,
 }
 
@@ -726,6 +727,7 @@ struct AdminRateWithCustomerRow {
     currency: String,
     librenms_bill_id: Option<i64>,
     business_label: Option<String>,
+    notes: String,
 }
 
 struct AdminCustomerOption {
@@ -961,6 +963,7 @@ async fn get_admin_rates(
             currency: r.currency,
             librenms_bill_id: r.librenms_bill_id,
             business_label: r.business_label,
+            notes: r.notes,
         })
         .collect();
     let customer_options: Vec<AdminCustomerOption> = customers
@@ -985,6 +988,7 @@ async fn get_admin_rates(
             new_form_machine_hosting_cents: "0",
             new_form_currency: "CNY",
             new_form_business_label: "",
+            new_form_notes: "",
             error: None,
         }
         .render()
@@ -1009,6 +1013,9 @@ struct NewRateFormIn {
     /// v0.6.4: 业务名称/备注(纯元数据,不参与计费)
     #[serde(default)]
     business_label: Option<String>,
+    /// 用户自定义备注
+    #[serde(default)]
+    notes: Option<String>,
 }
 
 async fn post_admin_rate_create(
@@ -1050,6 +1057,11 @@ async fn post_admin_rate_create(
         .as_deref()
         .map(str::trim)
         .filter(|s| !s.is_empty());
+    let notes = form
+        .notes
+        .as_deref()
+        .map(str::trim)
+        .unwrap_or("");
     let nr = NewRate {
         customer_id: customer.id,
         effective_from: &form.effective_from,
@@ -1062,6 +1074,7 @@ async fn post_admin_rate_create(
         currency: &form.currency,
         librenms_bill_id,
         business_label,
+        notes,
     };
     if let Err(e) = store.insert_rate(&nr).await {
         return error_page(&e.to_string());

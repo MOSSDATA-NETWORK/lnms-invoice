@@ -84,6 +84,10 @@
           <input id="rate_librenms_bill_id" type="number" name="librenms_bill_id" min="1" placeholder="留空 = 用客户默认 bill" />
           <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px">读取优先级:端口自己绑的 bill &gt; 这里填的 &gt; 客户默认 bill</div>
         </div>
+        <div class="form-row" style="grid-column: 1 / -1">
+          <label for="new_form_notes">备注</label>
+          <input id="new_form_notes" type="text" name="notes" value="{{ new_form_notes }}" placeholder="可选:自定义备注信息" maxlength="256" />
+        </div>
       </div>
       <div class="form-actions">
         <button type="submit" class="btn btn-primary">新增费用</button>
@@ -119,10 +123,7 @@
           <td class="num">{% if r.ip_quantity == 0 %}—{% else %}{{ r.ip_quantity * r.mbps_unit_price_cents }}{% endif %}</td>
           <td class="muted">{{ r.currency }}</td>
           <td class="muted">
-            {%- if r.machine_rent_cents != 0 %}机柜租用 {{ r.machine_rent_cents }}{% endif -%}
-            {%- if r.machine_rent_cents != 0 && r.machine_hosting_cents != 0 %} / {% endif -%}
-            {%- if r.machine_hosting_cents != 0 %}机柜托管 {{ r.machine_hosting_cents }}{% endif -%}
-            {%- if r.machine_rent_cents == 0 && r.machine_hosting_cents == 0 %}—{% endif -%}
+            {%- if !r.notes.is_empty() %}{{ r.notes }}{% else %}—{% endif -%}
           </td>
           <td>
             <form method="post" action="/admin/rates/{{ r.id }}/delete" style="display:inline" onsubmit="return confirm('确认删除该费用?');">
