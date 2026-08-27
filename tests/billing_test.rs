@@ -40,6 +40,7 @@ fn rate_with_ip_qty(mbps: i64, ip: i64, ip_qty: i64, rent: i64, hosting: i64) ->
         currency: "CNY".into(),
         librenms_bill_id: None,
         business_label: None,
+        notes: String::new(),
     }
 }
 

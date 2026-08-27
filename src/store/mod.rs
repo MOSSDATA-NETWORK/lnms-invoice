@@ -44,6 +44,10 @@ const MIGRATIONS: &[(&str, &str)] = &[
         "20260205000000_business_label_on_rates",
         include_str!("../../migrations/20260205000000_business_label_on_rates.sql"),
     ),
+    (
+        "20260206000000_notes_on_rates",
+        include_str!("../../migrations/20260206000000_notes_on_rates.sql"),
+    ),
 ];
 
 /// 数据库连接池
@@ -872,6 +876,26 @@ impl Store {
         &self,
         r: &NewRate<'_>,
     ) -> Result<i64> {
+        let mut tx = self.pool.begin().await.map_err(|e| {
+            Error::Database(format!("insert rates: begin tx: {e}"))
+        })?;
+        // 自动收尾:把上一条会与新 effective_from 冲突的费率收尾
+        // (effective_to IS NULL OR effective_to >= 新 effective_from)
+        // 设成「前一日」。新 effective_from 当天起,以新费率为准。
+        let prev_day = prev_day_str(r.effective_from)?;
+        sqlx::query(
+            "UPDATE rates SET effective_to = ?
+             WHERE customer_id = ?
+               AND effective_from < ?
+               AND (effective_to IS NULL OR effective_to >= ?)",
+        )
+        .bind(&prev_day)
+        .bind(r.customer_id)
+        .bind(r.effective_from)
+        .bind(r.effective_from)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| Error::Database(format!("insert rates: close prev: {e}")))?;
         let res = sqlx::query(
             "INSERT INTO rates
                 (customer_id, effective_from, effective_to,
@@ -892,10 +916,14 @@ impl Store {
         .bind(r.librenms_bill_id)
         .bind(r.business_label)
         .bind(r.notes)
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await
-        .map_err(|e| Error::Database(format!("insert rates: {e}")))?;
-        Ok(res.last_insert_rowid())
+        .map_err(|e| Error::Database(format!("insert rates: insert: {e}")))?;
+        let id = res.last_insert_rowid();
+        tx.commit().await.map_err(|e| {
+            Error::Database(format!("insert rates: commit: {e}"))
+        })?;
+        Ok(id)
     }
 
     pub async fn find_rate_for_customer_at(
@@ -1217,6 +1245,17 @@ impl Store {
             .map_err(|e| Error::Database(format!("commit sequence: {e}")))?;
         Ok(next)
     }
+}
+
+/// 给定 `YYYY-MM-DD`,返回前一天的 `YYYY-MM-DD`。
+/// `insert_rate` 自动收尾上一条费率时用。
+fn prev_day_str(yyyymmdd: &str) -> Result<String> {
+    let d = chrono::NaiveDate::parse_from_str(yyyymmdd, "%Y-%m-%d")
+        .map_err(|e| Error::Database(format!("prev_day_str: parse {yyyymmdd}: {e}")))?;
+    let prev = d
+        .pred_opt()
+        .ok_or_else(|| Error::Database("prev_day_str: date underflow".into()))?;
+    Ok(prev.format("%Y-%m-%d").to_string())
 }
 
 /// SQLITE_BUSY(5) / SQLITE_LOCKED(6) / SQLITE_CANTOPEN(14,大量并发 open 瞬态)。

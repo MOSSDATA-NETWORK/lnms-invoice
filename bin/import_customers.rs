@@ -262,8 +262,9 @@ async fn import(
                 machine_hosting_cents: r.machine_hosting_cents,
                 currency: &r.currency,
                 librenms_bill_id: None,
-            business_label: None,
-        })
+                business_label: None,
+                notes: "",
+            })
             .await?;
         stats.rates += 1;
     }

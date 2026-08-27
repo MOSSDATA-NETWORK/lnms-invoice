@@ -194,6 +194,7 @@ async fn test_rate_lookup_at_period() {
             currency: "CNY",
             librenms_bill_id: None,
             business_label: None,
+            notes: "",
         })
         .await
         .unwrap();
@@ -210,6 +211,7 @@ async fn test_rate_lookup_at_period() {
             currency: "CNY",
             librenms_bill_id: None,
             business_label: None,
+            notes: "",
         })
         .await
         .unwrap();
@@ -418,4 +420,172 @@ async fn test_has_invoice_for_period_true_after_insert() {
     assert!(!store.has_invoice_for_period(customer_id, 2026, 7).await.unwrap());
     // 其它客户仍未出
     assert!(!store.has_invoice_for_period(other, 2026, 8).await.unwrap());
+}
+
+// ============================================================
+// 费率自动收尾(insert_rate 自动把上一条 effective_to 设为新 effective_from - 1 天)
+// ============================================================
+
+#[tokio::test]
+async fn test_insert_rate_closes_overlapping_open_prev() {
+    let store = fresh_store().await;
+    let lnms_id = store
+        .insert_libre_nms_instance("main", "https://x", b"t")
+        .await
+        .unwrap();
+    let cid = store
+        .insert_customer(&NewCustomer {
+            internal_key: "auto-close",
+            name: "AC",
+            currency: "CNY",
+            librenms_instance_id: lnms_id,
+            librenms_bill_id: 1,
+            timezone: "Asia/Shanghai",
+            company_type: "domestic",
+            company_info_json: "{}",
+            company_info_schema_version: 1,
+            billing_address: None,
+            contact_email: None,
+        })
+        .await
+        .unwrap();
+
+    // 第一条:open-ended
+    store
+        .insert_rate(&NewRate {
+            customer_id: cid,
+            effective_from: "2026-01-01",
+            effective_to: None,
+            mbps_unit_price_cents: 1000,
+            ip_unit_price_cents: 0,
+            ip_quantity: 0,
+            machine_rent_cents: 0,
+            machine_hosting_cents: 0,
+            currency: "CNY",
+            librenms_bill_id: None,
+            business_label: None,
+            notes: "",
+        })
+        .await
+        .unwrap();
+
+    // 第二条 effective_from = 2026-08-15,应自动把第一条收尾到 2026-08-14
+    store
+        .insert_rate(&NewRate {
+            customer_id: cid,
+            effective_from: "2026-08-15",
+            effective_to: None,
+            mbps_unit_price_cents: 2000,
+            ip_unit_price_cents: 0,
+            ip_quantity: 0,
+            machine_rent_cents: 0,
+            machine_hosting_cents: 0,
+            currency: "CNY",
+            librenms_bill_id: None,
+            business_label: None,
+            notes: "",
+        })
+        .await
+        .unwrap();
+
+    let rates = store.list_rates_for_customer(cid).await.unwrap();
+    assert_eq!(rates.len(), 2, "应有 2 条费率");
+    let prev = rates.iter().find(|r| r.effective_from == "2026-01-01").unwrap();
+    assert_eq!(
+        prev.effective_to.as_deref(),
+        Some("2026-08-14"),
+        "上一条 open-ended 应收尾为新 effective_from - 1 天"
+    );
+    let newer = rates.iter().find(|r| r.effective_from == "2026-08-15").unwrap();
+    assert_eq!(newer.effective_to, None, "新插入那条 effective_to 不变");
+
+    // 出账查询 2026-08-15:新费率;2026-08-14:旧费率;2026-08-13:旧费率
+    let r_aug = store
+        .find_rate_for_customer_at(cid, "2026-08-15")
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(r_aug.mbps_unit_price_cents, 2000);
+    let r_jul = store
+        .find_rate_for_customer_at(cid, "2026-07-01")
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(r_jul.mbps_unit_price_cents, 1000);
+}
+
+#[tokio::test]
+async fn test_insert_rate_skips_when_prev_already_closed() {
+    let store = fresh_store().await;
+    let lnms_id = store
+        .insert_libre_nms_instance("main", "https://x", b"t")
+        .await
+        .unwrap();
+    let cid = store
+        .insert_customer(&NewCustomer {
+            internal_key: "already-closed",
+            name: "AC",
+            currency: "CNY",
+            librenms_instance_id: lnms_id,
+            librenms_bill_id: 1,
+            timezone: "Asia/Shanghai",
+            company_type: "domestic",
+            company_info_json: "{}",
+            company_info_schema_version: 1,
+            billing_address: None,
+            contact_email: None,
+        })
+        .await
+        .unwrap();
+
+    // 上一条已明确收尾到 2026-06-30
+    store
+        .insert_rate(&NewRate {
+            customer_id: cid,
+            effective_from: "2026-01-01",
+            effective_to: Some("2026-06-30"),
+            mbps_unit_price_cents: 1000,
+            ip_unit_price_cents: 0,
+            ip_quantity: 0,
+            machine_rent_cents: 0,
+            machine_hosting_cents: 0,
+            currency: "CNY",
+            librenms_bill_id: None,
+            business_label: None,
+            notes: "",
+        })
+        .await
+        .unwrap();
+
+    // 新一条 2026-07-01:不应动 2026-06-30 那条
+    store
+        .insert_rate(&NewRate {
+            customer_id: cid,
+            effective_from: "2026-07-01",
+            effective_to: None,
+            mbps_unit_price_cents: 2000,
+            ip_unit_price_cents: 0,
+            ip_quantity: 0,
+            machine_rent_cents: 0,
+            machine_hosting_cents: 0,
+            currency: "CNY",
+            librenms_bill_id: None,
+            business_label: None,
+            notes: "",
+        })
+        .await
+        .unwrap();
+
+    let prev = store
+        .list_rates_for_customer(cid)
+        .await
+        .unwrap()
+        .into_iter()
+        .find(|r| r.effective_from == "2026-01-01")
+        .unwrap();
+    assert_eq!(
+        prev.effective_to.as_deref(),
+        Some("2026-06-30"),
+        "已明确收尾的不应被覆盖"
+    );
 }

@@ -624,6 +624,7 @@ async fn test_admin_rates_page_lists_existing_rates() {
             currency: "CNY",
             librenms_bill_id: None,
             business_label: None,
+            notes: "",
         })
         .await
         .unwrap();

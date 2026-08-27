@@ -133,6 +133,7 @@ async fn main() -> ExitCode {
             currency: "CNY",
             librenms_bill_id: None,
             business_label: None,
+            notes: "",
         })
         .await
     {

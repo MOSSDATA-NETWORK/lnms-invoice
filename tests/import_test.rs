@@ -103,6 +103,7 @@ async fn test_import_writes_db_correctly() {
         currency: r["currency"].as_str().unwrap(),
         librenms_bill_id: None,
             business_label: None,
+            notes: "",
 
             };
     store.insert_rate(&nr).await.unwrap();
