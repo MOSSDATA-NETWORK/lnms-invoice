@@ -160,6 +160,7 @@
       <colgroup>
         <col style="width: 50px" />
         <col />
+        <col style="width: 160px" />
         <col style="width: 100px" />
         <col style="width: 100px" />
         <col style="width: 100px" />
@@ -170,6 +171,7 @@
         <tr>
           <th>序号</th>
           <th>业务名称</th>
+          <th>时间</th>
           <th class="num">数量</th>
           <th class="num">单价</th>
           <th class="num">总价</th>
@@ -182,6 +184,7 @@
         <tr>
           <td class="muted">{{ loop.index }}</td>
           <td>{{ r.business_label.as_deref().unwrap_or("—") }}</td>
+          <td class="muted">{{ r.effective_from }}{% match r.effective_to %}{% when Some with (t) %} ~ {{ t }}{% when None %} ~ 至今{% endmatch %}</td>
           <td class="num">{% if r.ip_quantity == 0 %}—{% else %}{{ r.ip_quantity }}{% endif %}</td>
           <td class="num">{{ r.mbps_unit_price_cents }}</td>
           <td class="num">{% if r.ip_quantity == 0 %}—{% else %}{{ r.ip_quantity * r.mbps_unit_price_cents }}{% endif %}</td>
@@ -191,7 +194,7 @@
           </td>
         </tr>
       {% else %}
-        <tr><td colspan="7"><div class="empty">还没有费用 · <a href="/admin/rates">新增费用</a></div></td></tr>
+        <tr><td colspan="8"><div class="empty">还没有费用 · <a href="/admin/rates">新增费用</a></div></td></tr>
       {% endfor %}
       </tbody>
     </table>

@@ -45,55 +45,56 @@
       <input type="hidden" name="ip_quantity" value="0" />
       <input type="hidden" name="machine_rent_cents" value="0" />
       <input type="hidden" name="machine_hosting_cents" value="0" />
-      <div style="display: flex; gap: 24px">
-        <div style="flex: 1; display: flex; flex-direction: column; gap: 16px">
-          <div class="form-row" style="margin: 0">
-            <label for="customer_id">客户</label>
-            <select id="customer_id" name="customer_id" required>
-              {% for o in customer_options %}
-                <option value="{{ o.id }}">{{ o.internal_key }} · {{ o.name }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="form-row" style="margin: 0">
-            <label for="ip_quantity">数量 (可选)</label>
-            <input id="ip_quantity" type="number" name="ip_quantity" value="{{ new_form_ip_quantity }}" min="0" step="1" placeholder="留空 = 从 LNMS bill 读取 95th 带宽" />
-            <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px">留空时自动从 bill 拉取 95th 带宽(Mbps);填写时使用自定义数量(如 IP 数、机柜数)</div>
-          </div>
-          <div class="form-row" style="margin: 0">
-            <label for="currency">币种</label>
-            <input id="currency" type="text" name="currency" value="{{ new_form_currency }}" required />
-          </div>
-          <div class="form-row" style="margin: 0">
-            <label for="effective_from">生效起 (YYYY-MM-DD)</label>
-            <input id="effective_from" type="text" name="effective_from" value="{{ new_form_effective_from }}" required />
-          </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 24px; row-gap: 0">
+        <!-- Row 1 -->
+        <div style="padding-bottom: 16px">
+          <label for="customer_id">客户</label>
+          <select id="customer_id" name="customer_id" required style="width:100%;margin-top:6px;padding:8px 12px;height:36px;border:1px solid var(--separator-strong);border-radius:var(--radius-sm);font-size:15px;font-family:inherit;background:var(--surface)">
+            {% for o in customer_options %}
+              <option value="{{ o.id }}">{{ o.internal_key }} · {{ o.name }}</option>
+            {% endfor %}
+          </select>
         </div>
-        <div style="flex: 1; display: flex; flex-direction: column; gap: 16px">
-          <div class="form-row" style="margin: 0">
-            <label for="new_form_business_label">业务名称</label>
-            <input id="new_form_business_label" type="text" name="business_label" value="{{ new_form_business_label }}" placeholder="如:BGP 主用 / IDC-A 区 / 备用链路" maxlength="128" />
-          </div>
-          <div class="form-row" style="margin: 0">
-            <label for="mbps_unit_price_cents">单价</label>
-            <input id="mbps_unit_price_cents" type="text" name="mbps_unit_price_cents" value="{{ new_form_mbps_unit_price_cents }}" required />
-          </div>
-          <div class="form-row" style="margin: 0">
-            <label for="rate_librenms_bill_id">LNMS bill_id (可选)</label>
-            <input id="rate_librenms_bill_id" type="number" name="librenms_bill_id" min="1" placeholder="留空 = 用客户默认 bill" />
-            <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px">读取优先级:端口自己绑的 bill &gt; 这里填的 &gt; 客户默认 bill</div>
-          </div>
-          <div class="form-row" style="margin: 0">
-            <label for="effective_to">生效止 (留空=至今)</label>
-            <input id="effective_to" type="text" name="effective_to" value="{{ new_form_effective_to }}" />
-          </div>
+        <div style="padding-bottom: 16px">
+          <label for="new_form_business_label">业务名称</label>
+          <input id="new_form_business_label" type="text" name="business_label" value="{{ new_form_business_label }}" placeholder="如:BGP 主用 / IDC-A 区 / 备用链路" maxlength="128" style="width:100%;margin-top:6px;padding:8px 12px;height:36px;border:1px solid var(--separator-strong);border-radius:var(--radius-sm);font-size:15px;font-family:inherit" />
+        </div>
+        <!-- Row 2 -->
+        <div style="padding-bottom: 16px">
+          <label for="ip_quantity">数量 (可选)</label>
+          <input id="ip_quantity" type="number" name="ip_quantity" value="{{ new_form_ip_quantity }}" min="0" step="1" placeholder="留空 = 从 LNMS bill 读取 95th 带宽" style="width:100%;margin-top:6px;padding:8px 12px;height:36px;border:1px solid var(--separator-strong);border-radius:var(--radius-sm);font-size:15px;font-family:inherit" />
+          <div style="font-size:12px;color:var(--text-tertiary);margin-top:4px;line-height:1.4">留空时自动从 bill 拉取 95th 带宽(Mbps);填写时使用自定义数量(如 IP 数、机柜数)</div>
+        </div>
+        <div style="padding-bottom: 16px">
+          <label for="mbps_unit_price_cents">单价</label>
+          <input id="mbps_unit_price_cents" type="text" name="mbps_unit_price_cents" value="{{ new_form_mbps_unit_price_cents }}" required style="width:100%;margin-top:6px;padding:8px 12px;height:36px;border:1px solid var(--separator-strong);border-radius:var(--radius-sm);font-size:15px;font-family:inherit" />
+        </div>
+        <!-- Row 3 -->
+        <div style="padding-bottom: 16px">
+          <label for="currency">币种</label>
+          <input id="currency" type="text" name="currency" value="{{ new_form_currency }}" required style="width:100%;margin-top:6px;padding:8px 12px;height:36px;border:1px solid var(--separator-strong);border-radius:var(--radius-sm);font-size:15px;font-family:inherit" />
+        </div>
+        <div style="padding-bottom: 16px">
+          <label for="rate_librenms_bill_id">LNMS bill_id (可选)</label>
+          <input id="rate_librenms_bill_id" type="number" name="librenms_bill_id" min="1" placeholder="留空 = 用客户默认 bill" style="width:100%;margin-top:6px;padding:8px 12px;height:36px;border:1px solid var(--separator-strong);border-radius:var(--radius-sm);font-size:15px;font-family:inherit" />
+          <div style="font-size:12px;color:var(--text-tertiary);margin-top:4px;line-height:1.4">读取优先级:端口自己绑的 bill &gt; 这里填的 &gt; 客户默认 bill</div>
+        </div>
+        <!-- Row 4 -->
+        <div style="padding-bottom: 16px">
+          <label for="effective_from">生效起 (YYYY-MM-DD)</label>
+          <input id="effective_from" type="text" name="effective_from" value="{{ new_form_effective_from }}" required style="width:100%;margin-top:6px;padding:8px 12px;height:36px;border:1px solid var(--separator-strong);border-radius:var(--radius-sm);font-size:15px;font-family:inherit" />
+        </div>
+        <div style="padding-bottom: 16px">
+          <label for="effective_to">生效止 (留空=至今)</label>
+          <input id="effective_to" type="text" name="effective_to" value="{{ new_form_effective_to }}" style="width:100%;margin-top:6px;padding:8px 12px;height:36px;border:1px solid var(--separator-strong);border-radius:var(--radius-sm);font-size:15px;font-family:inherit" />
+        </div>
+        <!-- Row 5: 备注 full width -->
+        <div style="grid-column: 1 / -1; padding-bottom: 16px">
+          <label for="new_form_notes">备注</label>
+          <input id="new_form_notes" type="text" name="notes" value="{{ new_form_notes }}" placeholder="可选:自定义备注信息" maxlength="256" style="width:100%;margin-top:6px;padding:8px 12px;height:36px;border:1px solid var(--separator-strong);border-radius:var(--radius-sm);font-size:15px;font-family:inherit" />
         </div>
       </div>
-      <div class="form-row" style="margin: 16px 0 0">
-        <label for="new_form_notes">备注</label>
-        <input id="new_form_notes" type="text" name="notes" value="{{ new_form_notes }}" placeholder="可选:自定义备注信息" maxlength="256" />
-      </div>
-      <div class="form-actions" style="justify-content: flex-end">
+      <div class="form-actions" style="margin-top:0">
         <button type="submit" class="btn btn-primary">新增费用</button>
       </div>
     </form>
@@ -108,6 +109,7 @@
       <colgroup>
         <col style="width: 50px" />
         <col />
+        <col style="width: 160px" />
         <col style="width: 100px" />
         <col style="width: 100px" />
         <col style="width: 100px" />
@@ -119,6 +121,7 @@
         <tr>
           <th>序号</th>
           <th>业务名称</th>
+          <th>时间</th>
           <th class="num">数量</th>
           <th class="num">单价</th>
           <th class="num">总价</th>
@@ -132,6 +135,7 @@
         <tr>
           <td class="muted">{{ loop.index }}</td>
           <td>{{ r.business_label.as_deref().unwrap_or("—") }}</td>
+          <td class="muted">{{ r.effective_from }}{% match r.effective_to %}{% when Some with (t) %} ~ {{ t }}{% when None %} ~ 至今{% endmatch %}</td>
           <td class="num">{% if r.ip_quantity == 0 %}—{% else %}{{ r.ip_quantity }}{% endif %}</td>
           <td class="num">{{ r.mbps_unit_price_cents }}</td>
           <td class="num">{% if r.ip_quantity == 0 %}—{% else %}{{ r.ip_quantity * r.mbps_unit_price_cents }}{% endif %}</td>
@@ -146,7 +150,7 @@
           </td>
         </tr>
       {% else %}
-        <tr><td colspan="8"><div class="empty">还没有费用记录</div></td></tr>
+        <tr><td colspan="9"><div class="empty">还没有费用记录</div></td></tr>
       {% endfor %}
       </tbody>
     </table>
